@@ -367,7 +367,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         ATypeElement bound = e.getValue();
         TypeReference typeReference =
             TypeReference.newTypeParameterBoundReference(
-                TypeReference.METHOD_TYPE_PARAMETER,
+                TypeReference.CLASS_TYPE_PARAMETER,
                 bloc.paramIndex, bloc.boundIndex);
 
         for (Annotation tla : bound.tlAnnotationsHere) {
@@ -637,7 +637,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
          && overwrite)
         return EMPTY_ANNOTATION_VISITOR;
 
-      return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
+      return fv.visitTypeAnnotation(typeRef, typePath, desc, visible);
     }
 
     /**
@@ -1162,9 +1162,12 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         aMethod.bounds.entrySet()) {
         BoundLocation bloc = e.getKey();
         ATypeElement bound = e.getValue();
-        TypeReference typeReference =
-            TypeReference.newTypeParameterBoundReference(
+        TypeReference typeReference = bloc.boundIndex < 0
+            ? TypeReference.newTypeParameterReference(
                 TypeReference.METHOD_TYPE_PARAMETER,
+                bloc.paramIndex)
+            : TypeReference.newTypeParameterBoundReference(
+                TypeReference.METHOD_TYPE_PARAMETER_BOUND,
                 bloc.paramIndex, bloc.boundIndex);
 
         for (Annotation tla : bound.tlAnnotationsHere) {
