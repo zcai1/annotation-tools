@@ -16,11 +16,14 @@ import junit.framework.TestSuite;
 
 import org.objectweb.asm.ClassReader;
 
+import annotations.Annotation;
+import annotations.AnnotationFactory;
 import annotations.el.AScene;
 import annotations.io.IndexFileParser;
 import annotations.io.IndexFileWriter;
 import annotations.io.classfile.ClassFileReader;
 import annotations.io.classfile.ClassFileWriter;
+import annotations.tests.classfile.foo.A;
 
 /**
  * This class is the testing framework for the class file/index file
@@ -129,7 +132,7 @@ public class AnnotationsTest extends TestCase {
   private void writeScene(String filename, AScene scene) {
     try {
       IndexFileWriter.write(scene, filename);
-    } catch(Exception e) {
+    } catch (Exception e) {
       System.err.println("caught exception: ");
       e.printStackTrace();
       fail();
@@ -145,7 +148,7 @@ public class AnnotationsTest extends TestCase {
   private void readScene(String filename, AScene scene) {
     try {
       IndexFileParser.parseFile(filename, scene);
-    } catch(Exception e) {
+    } catch (Exception e) {
       System.err.println("caught exception: ");
       e.printStackTrace();
       fail("caught exception: " + e.toString());
@@ -186,7 +189,7 @@ public class AnnotationsTest extends TestCase {
           new FileOutputStream(newFileName),
           overwrite);
     } catch (Throwable e) {
-      System.err.printf("caught exception in writeClass(%s, %s, ...): %n",
+      System.err.printf("caught exception in writeClass(oldFileName=%s, newFileName=%s, ...):%n",
                         oldFileName, newFileName);
       e.printStackTrace();
       fail();
@@ -204,7 +207,7 @@ public class AnnotationsTest extends TestCase {
       AScene scene) {
     try {
       ClassFileReader.read(scene, filename);
-    } catch(Exception e) {
+    } catch (Exception e) {
       System.err.printf("caught exception while reading %s:%n", new File(filename).getAbsolutePath());
       e.printStackTrace();
       fail();
@@ -260,7 +263,7 @@ public class AnnotationsTest extends TestCase {
 
       try {
         av.verify();
-      } catch(AnnotationVerifier.AnnotationMismatchException e) {
+      } catch (AnnotationVerifier.AnnotationMismatchException e) {
         String message = String.format("assertClassAnnotations (consider running javap on the two .class files):%n  correctClass %s%n  generatedClass %s%n%s", correctClass, generatedClass, e.toString());
         System.out.println();
         System.out.println(message);
@@ -270,7 +273,7 @@ public class AnnotationsTest extends TestCase {
         fail(message);
       }
 
-    } catch(IOException e) {
+    } catch (IOException e) {
       fail("IOException caught: " + e);
     }
   }
@@ -348,6 +351,22 @@ public class AnnotationsTest extends TestCase {
 //      testAgainstIndexFile(nameIndex(s + ".jaif"), nameClass(s+".class"));
 //      testAgainstClass(nameIndex(s + ".jaif"), nameClass(s));
 //    }
+  }
+
+  /**
+   * Runs a test on class files for package-info.
+   */
+  public void testcPackage() {
+    testAgainstClass(nameIndex("package-info.jaif"),
+        nameClass("package-info"));
+  }
+
+  /**
+   * Runs a test on index files for package-info.
+   */
+  public void testiPackage() {
+    testAgainstIndexFile(nameIndex("package-info.jaif"),
+        nameClass("package-info.class"));
   }
 
   /**

@@ -11,7 +11,7 @@
   <property name="java-version" value="8"/>
 
   <tstamp>
-      <format property="TIME" pattern="yy-MM-dd-hh-mm-ss-SS" />
+      <format property="TIME" pattern="yy-MM-dd-HH-mm-ss-SS" />
   </tstamp>
   <!-- Avoid conflicts between multiple users on the same computer. -->
   <property name="tmpdir" location="${java.io.tmpdir}/${user.name}/${TIME}" />
@@ -106,7 +106,7 @@
           classpathref="libpath"
           failonerror="true"
           packagenames="*"
-          destdir="javadoc" 
+          destdir="javadoc"
           access="public"
           />
 <!--
@@ -140,7 +140,7 @@
         <param name="-docfile" value="annotation-file-utilities.html"/>
       </doclet>
     </javadoc>
-    
+
   </target>
 
   <target name="jarfile.check.uptodate">
@@ -322,13 +322,23 @@
     <fail unless="release.ver"  message="You must specify a release version to update to"/>
     <fail unless="release.date" message="You must specify a release date to update to"/>
 
-    <update file="${annotation-tools}/annotation-file-utilities/annotation-file-utilities.html"
+    <property name="release.version.regexp" value="\d\.\d\.\d+(?:\.\d)"/>
+    <property name="afuWebPage"   value="${annotation-tools}/annotation-file-utilities/annotation-file-utilities.html"/>
+
+    <replaceregexp file="${afuWebPage}" byline="true"
+                   match="annotation-tools-${release.version.regexp}{0,1}.zip" replace="annotation-tools-${release.ver}.zip"/>
+
+    <update file="${afuWebPage}"
+            start="${afu.zip.ver.0}" end="${afu.zip.ver.1}"
+            with="annotation-tools-${release.ver}.zip"/>
+
+    <update file="${afuWebPage}"
             start="${afu.ver.0}" end="${afu.ver.1}"
             with="${release.ver}, ${release.date}"/>
 
-      <update file="${annotation-tools}/annotation-file-utilities/annotation-file-utilities.html"
-              start="${afu.date.0}" end="${afu.date.1}"
-              with="${release.date}"/>
+    <update file="${afuWebPage}"
+            start="${afu.date.0}" end="${afu.date.1}"
+            with="${release.date}"/>
 
     <property name="newCfrValue" value="Annotation File Utilities v${release.ver}"/>
 
@@ -377,8 +387,8 @@
     </copy>
 
     <symlink overwrite="true"
-             link="index.html"
-             resource="${deploy-dir}/annotation-file-utilities.html"/>
+             link="${deploy-dir}/index.html"
+             resource="annotation-file-utilities.html"/>
   </target>
 
   <target name="annotation-file-format-clean"
@@ -492,6 +502,8 @@
             classpathref="libpath"
             classname="com.sun.tools.javac.Main">
           <jvmarg line="-Xbootclasspath/p:${annotations-compiler-absolute}/dist/lib/javac.jar"/>
+          <arg value="-Xlint:-options"/>
+          <arg value="-Werror"/>
           <arg value="-g"/>
           <arg line="-sourcepath src"/>
           <arg line="-d bin"/>
