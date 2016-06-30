@@ -367,7 +367,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         ATypeElement bound = e.getValue();
         TypeReference typeReference =
             TypeReference.newTypeParameterBoundReference(
-                TypeReference.CLASS_TYPE_PARAMETER,
+                TypeReference.CLASS_TYPE_PARAMETER_BOUND,
                 bloc.paramIndex, bloc.boundIndex);
 
         for (Annotation tla : bound.tlAnnotationsHere) {
@@ -395,7 +395,13 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
             AnnotationVisitor xav =
                 visitTypeAnnotation(typeReference, itloc, tla);
 
-            visitTargetType(xav, TargetType.CLASS_TYPE_PARAMETER_BOUND);
+            if (bloc.boundIndex == -1) {
+              visitTargetType(xav, TargetType.CLASS_TYPE_PARAMETER);
+              visitBound(xav, bloc);
+            } else {
+              visitTargetType(xav, TargetType.CLASS_TYPE_PARAMETER_BOUND);
+              visitBound(xav, bloc);
+            }
             visitBound(xav, bloc);
             visitLocations(xav, itloc);
             visitFields(xav, tla);
