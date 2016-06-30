@@ -31,19 +31,20 @@ public class LocalVarTable {
     return get(start, end, localLocation.index);
   }
 
-  public Entry get(String name, String desc) {
-    String key = name+':'+desc;
-    for (Entry e : entries) {
-      if (key.equals(e.key)) {
-        return e;
-      }
-    }
-    return null;
-  }
+//  public Entry get(String name, String desc) {
+//    String key = name+':'+desc;
+//    for (Entry e : entries) {
+//      if (key.equals(e.key)) {
+//        return e;
+//      }
+//    }
+//    return null;
+//  }
 
   public void put(String name, String desc, String signature,
       Label start, Label end, int index) {
-    entries.add(new Entry(name+':'+desc, start, end, index));
+//    entries.add(new Entry(name+':'+desc, start, end, index));
+    entries.add(new Entry(desc, start, end, index));
   }
 
   static class Entry {
@@ -86,7 +87,7 @@ public class LocalVarTable {
 
     @Override
     public String toString() {
-      return key + ":" + index
+      return index //key + ":" + index
           + "," + start.getOffset()
           + "," + end.getOffset();
     }
