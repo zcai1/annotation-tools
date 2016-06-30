@@ -439,22 +439,7 @@ public class AnnotationsTest extends TestCase {
         nameClass("TestFieldGeneric.class"));
   }
 
-  /**
-   * Runs a test on class files for TestLocalVariable.
-   */
-  public void testcLocalVariable() {
-    testAgainstClass(nameIndex("TestLocalVariable.jaif"),
-        nameClass("TestLocalVariable"));
-  }
-
-  /**
-   * Runs a test on index files for TestLocalVariable.
-   */
-  public void testiLocalVariable() {
-    testAgainstIndexFile(nameIndex("TestLocalVariable.jaif"),
-        nameClass("TestLocalVariable.class"));
-  }
-
+  // Precedes TestLocalVariable, which is a superset of this.
   /**
    * Runs a test on class files for TestLocalVariableA.
    */
@@ -469,6 +454,22 @@ public class AnnotationsTest extends TestCase {
   public void testiLocalVariableA() {
     testAgainstIndexFile(nameIndex("TestLocalVariableA.jaif"),
         nameClass("TestLocalVariableA.class"));
+  }
+
+  /**
+   * Runs a test on class files for TestLocalVariable.
+   */
+  public void testcLocalVariable() {
+    testAgainstClass(nameIndex("TestLocalVariable.jaif"),
+        nameClass("TestLocalVariable"));
+  }
+
+  /**
+   * Runs a test on index files for TestLocalVariable.
+   */
+  public void testiLocalVariable() {
+    testAgainstIndexFile(nameIndex("TestLocalVariable.jaif"),
+        nameClass("TestLocalVariable.class"));
   }
 
   /**
