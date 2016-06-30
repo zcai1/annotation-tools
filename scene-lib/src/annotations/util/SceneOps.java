@@ -293,6 +293,8 @@ implements ElementVisitor<Void, Pair<AElement, AElement>> {
     AElement difference = eltPair.snd;
     diff(minuend.tlAnnotationsHere, subtrahend.tlAnnotationsHere,
         difference.tlAnnotationsHere);
+    // minuend.type could be null for the method body of an abstract method
+    // or interface; The annotations.el package may also leave other nulls.
     if (minuend.type != null) {
       AElement stype = subtrahend.type;
       AElement dtype = difference.type;
