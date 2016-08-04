@@ -312,8 +312,8 @@ public class AnnotationsTest extends TestCase {
   /**
    * Runs a test that:
    *  <li> reads annotations from indexFileName,
-   *  <li> inserts them into className
-   *  <li> writes results out to a temporary class file
+   *  <li> inserts them into className,
+   *  <li> writes results out to a temporary class file,
    *  <li> reads annotations from that class file, and
    *  <li> asserts that results written out match the annotations in the index file.
    */
@@ -341,7 +341,7 @@ public class AnnotationsTest extends TestCase {
       String fname2 = className+"-via-classfile-scene.txt";
       writeScene(fname1, correctScene);
       writeScene(fname2, generatedScene);
-      fail(String.format("For annotations read from %s :%n  After writing to class file and re-reading, result differed.%n  Scene read from index file is in %s .%n  Scene generated from class file is in %s .%n  Also consider running javap -v on %s .%n", indexFileName, fname1, fname2, tempFile));
+      fail(String.format("For annotations read from %s :%n  After writing to class file and re-reading, result differed.%n  Scene read from index file is in %s .%n  Scene generated from class file is in %s .%n  Also consider running:  javap -v %s%n", indexFileName, fname1, fname2, tempFile));
     }
 
     tempFile.delete();
@@ -454,22 +454,6 @@ public class AnnotationsTest extends TestCase {
   public void testiLocalVariableA() {
     testAgainstIndexFile(nameIndex("TestLocalVariableA.jaif"),
         nameClass("TestLocalVariableA.class"));
-  }
-
-  /**
-   * Runs a test on class files for TestLocalVariable1.
-   */
-  public void testcLocalVariable1() {
-    testAgainstClass(nameIndex("TestLocalVariable1.jaif"),
-        nameClass("TestLocalVariable"));
-  }
-
-  /**
-   * Runs a test on index files for TestLocalVariable1.
-   */
-  public void testiLocalVariable1() {
-    testAgainstIndexFile(nameIndex("TestLocalVariable1.jaif"),
-        nameClass("TestLocalVariable.class"));
   }
 
   /**
