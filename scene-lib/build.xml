@@ -110,6 +110,12 @@
             <pathelement location="src"/>
         </path>
 
+        <fileset dir="." id="test.files.java">
+            <include name="test/**/*.java"/>
+            <exclude name="**/cases/*"/>
+            <exclude name="**/executable/*"/>
+        </fileset>
+
         <path id="libpath">
             <pathelement location="${annotation-tools}/annotation-file-utilities/lib/asm-5.0.4.jar"/>
             <pathelement location="${junit}"/>
@@ -146,11 +152,17 @@
             <srcfiles refid="source.files.java.packageinfo"/>
         </uptodate>
 
+        <uptodate property="test.files.java.uptodate">
+            <srcfiles refid="test.files.java"/>
+            <mapper type="glob" from="test/*.java" to="bin/*.class"/>
+        </uptodate>
+
         <condition property="bin.uptodate">
           <and>
             <isset property="source.files.non-java.uptodate"/>
             <isset property="source.files.java.nopackageinfo.uptodate"/>
             <isset property="source.files.java.packageinfo.uptodate"/>
+            <isset property="test.files.java.uptodate"/>
           </and>
         </condition>
 
@@ -158,6 +170,7 @@
         <echo message="source.files.non-java.uptodate: ${source.files.non-java.uptodate}"/>
         <echo message="source.files.java.nopackageinfo.uptodate: ${source.files.java.nopackageinfo.uptodate}"/>
         <echo message="source.files.java.packageinfo.uptodate: ${source.files.java.packageinfo.uptodate}"/>
+        <echo message="test.files.java.uptodate: ${test.files.java.uptodate}"/>
         <echo message="bin.uptodate: ${bin.uptodate}"/>
     </target>
 
