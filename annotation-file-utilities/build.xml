@@ -84,7 +84,7 @@
       <pathelement location="${annotation-tools}/annotation-file-utilities/lib/plume.jar"/>
       <pathelement location="${annotation-tools}/annotation-file-utilities/lib/guava-15.0.jar"/>
       <pathelement location="${scene-lib}/bin"/>
-      <pathelement location="${annotation-tools}/annotation-file-utilities/lib/asm-5.0.jar"/>
+      <pathelement location="${annotation-tools}/annotation-file-utilities/lib/asm-5.0.4.jar"/>
       <!-- needed for optionsdoc target -->
       <pathelement location="bin"/>
       <!-- additional for distribution:
@@ -188,7 +188,7 @@
       <fileset dir="${scene-lib}/bin" excludes="annotations-expected/**,annotations/tests/**"/>
     </copy>
     <!-- Also need to get class files in libraries -->
-    <unjar src="lib/asm-5.0.jar" dest="${temp-jarfile}">
+    <unjar src="lib/asm-5.0.4.jar" dest="${temp-jarfile}">
       <patternset>
         <include name="**/*.class"/>
         <exclude name="META-INF/" />
@@ -459,7 +459,7 @@
   <target name="run-tests" depends="init-properties"
           description="run tests for the annotator">
     <exec dir="tests/" executable="make" failonerror="true">
-        <env key="XJAVAC" value="${annotations-compiler-absolute}/dist/bin/javac"/>
+        <env key="XJAVAC" value="${annotations-compiler-absolute}/dist/bin/javac -g ${xjavac.args}"/>
         <env key="JAVAC_JAR" value="${annotations-compiler-absolute}/dist/lib/javac.jar"/>
     </exec>
   </target>

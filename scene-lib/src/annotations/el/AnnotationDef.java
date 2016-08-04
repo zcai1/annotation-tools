@@ -67,7 +67,9 @@ public final class AnnotationDef extends AElement {
         Map<String,AnnotationFieldType> fieldTypes = new LinkedHashMap<String,AnnotationFieldType>();
         for (Method m : annoType.getDeclaredMethods()) {
             AnnotationFieldType aft = AnnotationFieldType.fromClass(m.getReturnType(), adefs);
-            fieldTypes.put(m.getName(), aft);
+            if (aft != null) {
+                fieldTypes.put(m.getName(), aft);
+            }
         }
 
         AnnotationDef result = new AnnotationDef(name, Annotations.noAnnotations, fieldTypes);

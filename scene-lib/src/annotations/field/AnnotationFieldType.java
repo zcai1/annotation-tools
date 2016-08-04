@@ -45,6 +45,8 @@ public abstract class AnnotationFieldType extends EqualByStringRepresentation {
             return ClassTokenAFT.ctaft;
         } else if (c.isEnum()) {
             return new EnumAFT(c.getName());
+        } else if ("void".equals(c.getName())) {
+            return null;
         } else {
             throw new Error("Unrecognized class: " + c);
         }

@@ -175,8 +175,8 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
     }
     if (trace) { System.out.printf("visitMethod(%s, %s, %s, %s, %s) in %s (%s)%n", access, name, desc, signature, exceptions, this, this.getClass()); }
     AMethod aMethod = aClass.methods.vivify(name+desc);
-    return new MethodAnnotationSceneReader(name, desc, signature, aMethod, null);
-        //, super.visitMethod(access, name, desc, signature, exceptions)
+    return new MethodAnnotationSceneReader(name, desc, signature, aMethod,
+        super.visitMethod(access, name, desc, signature, exceptions));
   }
 
   // converts JVML format to Java format
@@ -834,11 +834,11 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     private void handleMethodLocalVariable(AMethod aMethod) {
       if (xLocationsArgs.isEmpty()) {
-        aMethod.body.locals.vivify(makeLocalLocation())
+        aMethod.body.locals.vivify(makeLocalLocation()).type
             .tlAnnotationsHere.add(makeAnnotation());
       } else {
-        aMethod.body.locals.vivify(makeLocalLocation())
-            .type.innerTypes.vivify(makeInnerTypeLocation())
+        aMethod.body.locals.vivify(makeLocalLocation()).type
+            .innerTypes.vivify(makeInnerTypeLocation())
             .tlAnnotationsHere.add(makeAnnotation());
       }
     }
@@ -1438,6 +1438,34 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
         av.visitXTypeIndex(idx);
       }
     }
+
+    @Override
+    public void visitEnd() {
+      super.visitEnd();
+      for (LocalVarTable.Entry lv : localVars.getEntries()) {
+        LocalLocation loc = new LocalLocation(lv.start.getOffset(),
+            lv.end.getOffset(), lv.index);
+        AElement aField = ((AMethod) aMethod).body.locals.vivify(loc);
+        TypeReference typeReference =
+            TypeReference.newTypeReference(TypeReference.LOCAL_VARIABLE);
+        int typeRef = typeReference.getValue();
+        for (Annotation anno : aField.type.tlAnnotationsHere) {
+          XAnnotationVisitor av =
+              new AnnotationSceneReader(typeRef, null, lv.key, false, aField);
+          av.visitXStartPc(lv.start.getOffset());
+          av.visitXLength(lv.end.getOffset() - lv.start.getOffset());
+          av.visitXIndex(lv.index);
+          av.visitXNumEntries(1);
+          av.visitEnd();
+        }
+
+        for (InnerTypeLocation itloc : aField.type.innerTypes.keySet()) {
+          ATypeElement elem = aField.type.innerTypes.get(itloc);
+        }
+      }
+    }
+
+    // TODO: visit code!
   }
 
   public static void printClasspath() {
