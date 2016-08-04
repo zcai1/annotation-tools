@@ -434,6 +434,22 @@ public class AnnotationsTest extends TestCase {
   }
 
   /**
+   * Runs a test on class files for TestLocalVariable1.
+   */
+  public void testcLocalVariable1() {
+    testAgainstClass(nameIndex("TestLocalVariable1.jaif"),
+        nameClass("TestLocalVariable"));
+  }
+
+  /**
+   * Runs a test on index files for TestLocalVariable1.
+   */
+  public void testiLocalVariable1() {
+    testAgainstIndexFile(nameIndex("TestLocalVariable1.jaif"),
+        nameClass("TestLocalVariable.class"));
+  }
+
+  /**
    * Runs a test on class files for TestLocalVariable.
    */
   public void testcLocalVariable() {
