@@ -17,7 +17,11 @@ import annotations.io.IndexFileWriter;
 
 /**
  * A <code> ClassFileReader </code> provides methods for reading in annotations
- *  from a class file into an {@link annotations.el.AScene}.
+ * from a class file into an {@link annotations.el.AScene}.
+ * <p>
+ *
+ * The main method reads annotations from a class file and writes
+ * them to an index file.
  */
 public class ClassFileReader {
 
