@@ -42,7 +42,7 @@ public class ClassFileWriter {
     + linesep
     + "Each class is either a fully-qualified name of a class on your classpath,"
     + linesep
-    + "or a path to a .class file, such as e.g. /.../path/to/a/b/C.class ."
+    + "or a path to a .class file, such as .../path/to/a/b/C.class ."
     + linesep
     + "Arguments beginning with a single '@' are interpreted as argument files to"
     + linesep
@@ -118,7 +118,11 @@ public class ClassFileWriter {
 
       AScene scene = new AScene();
 
-      IndexFileParser.parseFile(indexFileName, scene);
+      try {
+        java.util.Map<String, annotations.el.AnnotationDef> defs = IndexFileParser.parseFile(indexFileName, scene);
+      } catch (FileNotFoundException fnf) {
+        System.out.printf("File not found: " + fnf.getMessage());
+      }
 
       // annotations loaded from index file into scene, now insert them
       // into class file
