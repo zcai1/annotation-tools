@@ -1060,7 +1060,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
 
       if (elem != null) {
         for (Annotation tla : elem.tlAnnotationsHere) {
-          visitInsnAnnotation(typeSort, typeIndex, tla);
+          AnnotationVisitor xav = visitInsnAnnotation(typeSort, typeIndex, tla);
+          visitFields(xav, tla);
+          xav.visitEnd(); // should I do more here?  visit offset, locations, etc?
         }
 
         for (Map.Entry<InnerTypeLocation, ATypeElement> e :
@@ -1069,7 +1071,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           ATypeElement inner = e.getValue();
 
           for (Annotation tla : inner.tlAnnotationsHere) {
-            visitInsnAnnotation(typeSort, typeIndex, tla, innerLoc);
+            AnnotationVisitor xav = visitInsnAnnotation(typeSort, typeIndex, tla, innerLoc);
+            visitFields(xav, tla);
+            xav.visitEnd(); // should I do more here?  visit offset, locations, etc?
           }
         }
       }
