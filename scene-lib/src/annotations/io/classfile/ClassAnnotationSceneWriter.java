@@ -1,6 +1,6 @@
-//This class is a complete ClassVisitor with many hidden classes that do
-//the work of parsing an AScene and inserting them into a class file, as
-//the original class file is being read.
+// This class is a complete ClassVisitor with many hidden classes that do
+// the work of parsing an AScene and inserting them into a class file, as
+// the original class file is being read.
 
 package annotations.io.classfile;
 
@@ -40,7 +40,7 @@ import annotations.field.*;
  * A ClassAnnotationSceneWriter is a {@link org.objectweb.asm.ClassVisitor}
  * that can be used to write a class file that is the combination of an
  * existing class file and annotations in an {@link AScene}.  The "write"
- * in <code> ClassAnnotationSceneWriter </code> refers to a class file
+ * in <code>ClassAnnotationSceneWriter</code> refers to a class file
  * being rewritten with information from a scene.  Also see {@link
  * ClassAnnotationSceneReader}.
  *
@@ -51,7 +51,7 @@ import annotations.field.*;
  * already contains all its annotations, pass this as a {@link
  * org.objectweb.asm.ClassVisitor} to {@link
  * org.objectweb.asm.ClassReader#accept}, and then obtain the resulting
- * class, ready to be written to a file, with {@link #toByteArray}.  </p>
+ * class, ready to be written to a file, with {@link #toByteArray}.
  *
  * <p>
  *
@@ -88,13 +88,11 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   //     ClassAnnotationSceneWriter.visitMethod() returns a
   //     MethodAnnotationSceneWriter that visits all of that method's
   //     annotations in the scene at the first call of visit{Code, End}.
-  //
 
   // Whether to output error messages for unsupported cases
-  private static final boolean strict = false;
+  private static final boolean strict = true;
 
-  // None of these classes fields should be null, except for aClass, which
-  //  can't be vivified until the first visit() is called.
+  // None of these fields should be null, except for aClass initially.
 
   /**
    * The scene from which to get additional annotations.
@@ -104,18 +102,20 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   /**
    * The representation of this class in the scene.
    */
-  private AClass aClass;
+  // Starts out null because it can't be vivified until the first visit() is called.
+  private AClass aClass = null;
 
   /**
-   * A list of annotations on this class that this has already visited
-   *  in the class file.
+   * A list of annotations that were already on this class and that the
+   * visitor has encountered so far while visiting the class file.
    */
-  private final List<String> existingClassAnnotations;
+  private final List<String> existingClassAnnotations = new ArrayList<String>();
 
   /**
-   * Whether or not this has visited the corresponding annotations in scene.
+   * Whether or not this has visited the class definition annotations (on
+   * the class definition, the type parameter bounds, etc.) in scene.
    */
-  private boolean hasVisitedClassAnnotationsInScene;
+  private boolean hasVisitedClassAnnotationsInScene = false;
 
   /**
    * Whether or not to overwrite existing annotations on the same element
@@ -123,15 +123,15 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
    */
   private final boolean overwrite;
 
-  private final Map<String, Set<Integer>> dynamicConstructors;
-  private final Map<String, Set<Integer>> lambdaExpressions;
+  private final Map<String, Set<Integer>> dynamicConstructors = new HashMap<String, Set<Integer>>();
+  private final Map<String, Set<Integer>> lambdaExpressions = new HashMap<String, Set<Integer>>();
 
   private ClassReader cr = null;
 
   /**
-   * Constructs a new <code> ClassAnnotationSceneWriter </code> that will
-   * insert all the annotations in <code> scene </code> into the class that
-   * it visits.  <code> scene </code> must be an {@link AScene} over the
+   * Constructs a new <code>ClassAnnotationSceneWriter</code> that will
+   * insert all the annotations in <code>scene</code> into the class that
+   * it visits.  <code>scene</code> must be an {@link AScene} over the
    * class that this will visit.
    *
    * @param cr the reader for the class being modified
@@ -141,12 +141,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   public ClassAnnotationSceneWriter(ClassReader cr, AScene scene, boolean overwrite) {
     super(cr);
     this.scene = scene;
-    this.hasVisitedClassAnnotationsInScene = false;
-    this.aClass = null;
-    this.existingClassAnnotations = new ArrayList<String>();
     this.overwrite = overwrite;
-    this.dynamicConstructors = new HashMap<String, Set<Integer>>();
-    this.lambdaExpressions = new HashMap<String, Set<Integer>>();
     this.cr = cr;
   }
 
@@ -173,8 +168,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
     cr.accept(new MethodCodeIndexer(), 0);
     super.visit(version, access, name, signature, superName, interfaces);
     // class files store fully quantified class names with '/' instead of '.'
-    name = name.replace('/', '.');
-    aClass = scene.classes.vivify(name);
+    aClass = scene.classes.vivify(name.replace('/', '.'));
   }
 
   /**
@@ -247,9 +241,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
       TypePath typePath, String desc, boolean visible) {
     existingClassAnnotations.add(desc);
     // If annotation exists in scene, and in overwrite mode,
-    //  return empty visitor, annotation from scene will be visited later.
+    //  return empty visitor, since annotation from scene will be visited later.
     if (aClass.lookup(classDescToName(desc)) != null
-       && overwrite) {
+        && overwrite) {
       return EMPTY_ANNOTATION_VISITOR;
     }
     return super.visitTypeAnnotation(typeRef, typePath, desc, visible);
@@ -265,7 +259,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   }
 
   /**
-   * Returns an AnnotationVisitor over the given type annotation.
+   * Returns an AnnotationVisitor over the given top-level type annotation.
    */
   private AnnotationVisitor visitTypeAnnotation(TypeReference typeReference,
       InnerTypeLocation loc, Annotation tla) {
@@ -297,7 +291,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   }
 
   /**
-   * Converts InnerTypeLocation to TypePath.
+   * Converts TypePath to InnerTypeLocation.
    */
   static InnerTypeLocation innerTypeLocation(TypePath typePath) {
     if (typePath != null) {
@@ -323,7 +317,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         default:
           if (Character.isDigit(charsRep[i])) {
             int j = stringRep.indexOf(';', i);
-            if (j > i) {
+            if (j != -1) {
               String s = stringRep.substring(i, j);
               int n = Integer.parseInt(s);
               intsRep.add(3);
@@ -343,8 +337,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   }
 
   /**
-   * Have this class visit the annotations in scene if and only if it has not
-   * already visited them.
+   * Have this class visit the annotations in scene that apply to the class
+   * definition (top-level, type parameter bounds, etc.) if and only if it
+   * has not already visited them.
    */
   private void ensureVisitSceneClassAnnotations() {
     if (!hasVisitedClassAnnotationsInScene) {
@@ -423,7 +418,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
 
   /**
    * The following methods are utility methods for accessing
-   * information useful to asm from scene-library data structures.
+   * information useful to ASM from scene-library data structures.
    *
    * @return true iff tla is visible at runtime
    */
@@ -451,6 +446,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
    * Unwraps the class name from the given class descriptor.
    */
   private static String classDescToName(String desc) {
+    assert desc.startsWith("L");
+    assert desc.endsWith(";");
     return desc.substring(1, desc.length() - 1).replace('/', '.');
   }
 
@@ -514,7 +511,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   }
 
   /**
-   * Have xav visit the location length  and all locations in loc.
+   * Have xav visit the location length and all locations in loc.
    */
   private void visitLocations(AnnotationVisitor xav, InnerTypeLocation loc) {
     if (loc == null || loc.location == null) {
@@ -929,8 +926,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
     }
 
     /**
-     * Has this visit the extended annotation in tla and returns the
-     * resulting visitor.
+     * Has this visit the extended annotation in top-level type annotation
+     * tla and returns the resulting visitor.
      */
     private AnnotationVisitor
     visitTypeAnnotation(TypeReference typeReference,
@@ -942,8 +939,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
     }
 
     /**
-     * Has this visit the extended annotation in tla and returns the
-     * resulting visitor.
+     * Has this visit the extended annotation in top-level type annotation
+     * tla (with no inner type location) and returns the resulting visitor.
      */
     private AnnotationVisitor
     visitTypeAnnotation(TypeReference typeReference, Annotation tla) {
@@ -1273,6 +1270,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           // into bytecode
           // TODO: output a warning or translate
           if (strict) { System.err.println("ClassAnnotationSceneWriter.ensureVisitObjectCreationAnnotation: no bytecode offset found!"); }
+          // TODO: why does this proceed if it doesn't have a bytecode offset?
+          //  Should there be a "continue;" statement here?
         }
         int offset = entry.getKey().offset;
         ATypeElement aNew = entry.getValue();
@@ -1424,6 +1423,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           // into bytecode
           // TODO: output a warning or translate
           if (strict) { System.err.println("ClassAnnotationSceneWriter.ensureVisitTypecastAnnotation: no bytecode offset found!"); }
+          // TODO: why does this proceed if it doesn't have a bytecode offset?
+          //  Should there be a "continue;" statement here?
         }
         int offset = entry.getKey().offset;
         int typeIndex = entry.getKey().type_index;
@@ -1478,6 +1479,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           // into bytecode
           // TODO: output a warning or translate
           if (strict) { System.err.println("ClassAnnotationSceneWriter.ensureVisitTypeTestAnnotation: no bytecode offset found!"); }
+          // TODO: why does this proceed if it doesn't have a bytecode offset?
+          //  Should there be a "continue;" statement here?
         }
         int offset = entry.getKey().offset;
         ATypeElement aTypeTest = entry.getValue();
@@ -1646,6 +1649,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           // into bytecode
           // TODO: output a warning or translate
           if (strict) { System.err.println("ClassAnnotationSceneWriter.ensureVisitMethodInvocationAnnotations: no bytecode offset found!"); }
+          // TODO: why does this proceed if it doesn't have a bytecode offset?
+          //  Should there be a "continue;" statement here?
         }
         int offset = entry.getKey().offset;
         int typeIndex = entry.getKey().type_index;
@@ -1709,6 +1714,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         ensureVisitReceiverAnnotations();
         //ensureVisitObjectCreationAnnotations();
         //ensureVisitTypecastAnnotations();
+        // This call to ensureVisitTypecastAnnotations is wrong because it
+        // would put the type-test annotations on the method (return)
+        // rather than on the instanceof where it belongs.
         //ensureVisitTypeTestAnnotations();
         ensureVisitLambdaExpressionAnnotations();
         ensureVisitMemberReferenceAnnotations();
