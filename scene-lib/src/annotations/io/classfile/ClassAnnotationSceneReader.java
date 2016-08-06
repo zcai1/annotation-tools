@@ -1390,25 +1390,25 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
 
       switch (typeReference.getSort()) {
       case TypeReference.INSTANCEOF:
-        visitInsnAnnotation(typeRef, av, body.instanceofs, false);
+        visitInsnAnnotationHelper(typeRef, av, body.instanceofs, false);
         break;
       case TypeReference.NEW:
-        visitInsnAnnotation(typeRef, av, body.news, false);
+        visitInsnAnnotationHelper(typeRef, av, body.news, false);
         break;
       case TypeReference.CONSTRUCTOR_REFERENCE:
       case TypeReference.METHOD_REFERENCE:
-        visitInsnAnnotation(typeRef, av, body.refs, false);
+        visitInsnAnnotationHelper(typeRef, av, body.refs, false);
         break;
       case TypeReference.CAST:
-        visitInsnAnnotation(typeRef, av, body.typecasts, true);
+        visitInsnAnnotationHelper(typeRef, av, body.typecasts, true);
         break;
       case TypeReference.CONSTRUCTOR_INVOCATION_TYPE_ARGUMENT:
       case TypeReference.METHOD_INVOCATION_TYPE_ARGUMENT:
-        visitInsnAnnotation(typeRef, av, body.calls, true);
+        visitInsnAnnotationHelper(typeRef, av, body.calls, true);
         break;
       case TypeReference.CONSTRUCTOR_REFERENCE_TYPE_ARGUMENT:
       case TypeReference.METHOD_REFERENCE_TYPE_ARGUMENT:
-        visitInsnAnnotation(typeRef, av, body.refs, true);
+        visitInsnAnnotationHelper(typeRef, av, body.refs, true);
         break;
       default:
         throw new RuntimeException();
@@ -1426,7 +1426,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      *
      * @see org.objectweb.asm.TypeReference
      */
-    public void visitInsnAnnotation(int typeRef, XAnnotationVisitor av,
+    public void visitInsnAnnotationHelper(int typeRef, XAnnotationVisitor av,
         VivifyingMap<RelativeLocation, ATypeElement> map,
         boolean hasTypeIndex) {
       TypeReference typeReference = new TypeReference(typeRef);
