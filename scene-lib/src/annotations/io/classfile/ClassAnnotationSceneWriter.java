@@ -1231,6 +1231,17 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           xav.visitEnd();
         }
 
+        for (Annotation tla : aLocation.type.tlAnnotationsHere) {
+          if (shouldSkip(tla)) continue;
+
+          AnnotationVisitor xav =
+              visitLocalVariableAnnotation(typeRef, localLocation, tla);
+          visitTargetType(xav, TargetType.LOCAL_VARIABLE);
+          visitLocations(xav, InnerTypeLocation.EMPTY_INNER_TYPE_LOCATION);
+          visitFields(xav, tla);
+          xav.visitEnd();
+        }
+
         // now do annotations on inner type of aLocation (local variable)
         for (Map.Entry<InnerTypeLocation, ATypeElement> e :
           aLocation.type.innerTypes.entrySet()) {
