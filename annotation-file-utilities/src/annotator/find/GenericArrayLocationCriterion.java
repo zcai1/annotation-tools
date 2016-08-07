@@ -469,7 +469,7 @@ public class GenericArrayLocationCriterion implements Criterion {
 
   /**
    * @param fieldAccess
-   * @return
+   * @return True if the field has static access
    */
   private boolean isStatic(JCFieldAccess fieldAccess) {
     return fieldAccess.type != null

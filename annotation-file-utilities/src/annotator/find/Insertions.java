@@ -1334,10 +1334,6 @@ loop:
       return fromType(conv(type));
     }
 
-    /**
-     * @param jtype
-     * @return
-     */
     static Type conv(final com.sun.tools.javac.code.Type jtype) {
       Type type = null;
       DeclaredType d;

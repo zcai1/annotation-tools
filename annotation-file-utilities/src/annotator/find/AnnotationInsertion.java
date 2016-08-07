@@ -67,8 +67,6 @@ public class AnnotationInsertion extends Insertion {
      *            if true, the annotation will be surrounded by block comments.
      * @param abbreviate
      *            if true, the package name will be removed from the annotation.
-     *            The package name can be retrieved again by calling the
-     *            {@link #getPackageName()} method.
      * @return the text to insert
      */
     protected String getText(boolean comments, boolean abbreviate) {

@@ -251,24 +251,22 @@ public final class InClassCriterion implements Criterion {
     return "In class '" + className + "'" + (exactMatch ? " (exactly)" : "");
   }
 
-  /**
-   * Return an array of Strings representing the characters between
-   * successive instances of the delimiter character.
-   * Always returns an array of length at least 1 (it might contain only the
-   * empty string).
-   * @see #split(String s, String delim)
-   **/
-  /*
-  private static List<String> split(String s, char delim) {
-    List<String> result = new ArrayList<String>();
-    for (int delimpos = s.indexOf(delim); delimpos != -1; delimpos = s.indexOf(delim)) {
-      result.add(s.substring(0, delimpos));
-      s = s.substring(delimpos+1);
-    }
-    result.add(s);
-    return result;
-  }
-  */
+//   /**
+//    * Return an array of Strings representing the characters between
+//    * successive instances of the delimiter character.
+//    * Always returns an array of length at least 1 (it might contain only the
+//    * empty string).
+//    * @see #split(String s, String delim)
+//    */
+//   private static List<String> split(String s, char delim) {
+//     List<String> result = new ArrayList<String>();
+//     for (int delimpos = s.indexOf(delim); delimpos != -1; delimpos = s.indexOf(delim)) {
+//       result.add(s.substring(0, delimpos));
+//       s = s.substring(delimpos+1);
+//     }
+//     result.add(s);
+//     return result;
+//   }
 
   private static void debug(String message, Object... args) {
     if (debug) {

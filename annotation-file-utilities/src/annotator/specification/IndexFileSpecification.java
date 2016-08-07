@@ -318,9 +318,7 @@ public class IndexFileSpecification implements Specification {
    * Fill in this.insertions with insertion pairs.
    * @param clist The criteria specifying the location of the insertions.
    * @param element Holds the annotations to be inserted.
-   * @param add {@code true} if the create {@link AnnotationInsertion}s should
-   *         be added to {@link #insertions}, {@code false} otherwise.
-   * @return A list of the {@link AnnotationInsertion}s that are created.
+   * @return A list of the {@link AnnotationInsertion}s that were created.
    */
   private List<Insertion> parseElement(CriterionList clist, AElement element,
       List<Insertion> innerTypeInsertions) {

@@ -171,7 +171,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
    * character at or after the given position.  (Assumes position is not
    * inside a comment.)
    *
-   * @see #getNthInstanceBetween(char, int, int, int, CompilationUnitTree)
+   * @see #getNthInstanceInRange(char, int, int, int)
    */
   private int getFirstInstanceAfter(char c, int i) {
     return getNthInstanceInRange(c, i, Integer.MAX_VALUE, 1);
@@ -188,7 +188,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
    * @param end position at which the search ends (exclusive)
    * @param n number of repetitions, or 0 for last occurrence
    * @return position of match in {@code tree}, or
-   *          {@link Position.NOPOS} if match not found
+   *          {@link Position#NOPOS} if match not found
    */
   private int getNthInstanceInRange(char c, int start, int end, int n) {
     if (end < 0) {
