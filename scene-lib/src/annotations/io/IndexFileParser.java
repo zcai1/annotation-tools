@@ -476,8 +476,9 @@ public final class IndexFileParser {
             ScalarAFT saft = (ScalarAFT) aft;
             Object value = parseScalarAFV(saft);
             ab.addScalarField(fieldName, saft, value);
-        } else
+        } else {
             throw new AssertionError();
+        }
     }
 
     // reads the "@A" part of an annotation such as "@A(f1=5, f2=10)".
