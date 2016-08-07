@@ -17,7 +17,7 @@ class TestObjectCreationGenericArray:
   		inner-type 0, 0 : @annotations.tests.classfile.foo.A
   	  	
   method test2()V :
-  	new # 23 : @annotations.tests.classfile.foo.A
+  	new # 7 : @annotations.tests.classfile.foo.A
   		inner-type 3, 0 : @annotations.tests.classfile.foo.B(value="str")
   	
   method test3()V :
