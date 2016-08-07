@@ -1362,10 +1362,10 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
     public AnnotationVisitor visitLocalVariableAnnotation(int typeRef,
         TypePath typePath, Label[] start, Label[] end, int[] index,
         String desc, boolean visible) {
-      AnnotationVisitor v = super.visitLocalVariableAnnotation(typeRef,
-          typePath, start, end, index, desc, visible);
+      // AnnotationVisitor v = super.visitLocalVariableAnnotation(typeRef,
+      //     typePath, start, end, index, desc, visible);
       int i = start.length - 1;
-      if (i >= 0) {
+      // if (i >= 0) {
         int off = start[i].getOffset();
         int len = end[i].getOffset() - off;
         XAnnotationVisitor av = new AnnotationSceneReader(typeRef,
@@ -1374,9 +1374,10 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
         av.visitXLength(len);
         av.visitXIndex(index[i]);
         av.visitXNumEntries(1);
-        av.visitEnd();
-      }
-      return v;
+        // av.visitEnd();
+        return av;
+      // }
+
     }
 
     @Override
