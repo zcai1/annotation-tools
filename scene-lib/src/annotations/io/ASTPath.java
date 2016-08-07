@@ -714,7 +714,7 @@ implements Comparable<ASTPath>, Iterable<ASTPath.ASTEntry> {
      * arguments. For example, the call:
      *
      * <pre>
-     * {@code newASTEntry(Tree.Kind.WHILE_LOOP, new String[] {"condition", "statement"});</pre>
+     * {@code newASTEntry(Tree.Kind.WHILE_LOOP, new String[] {"condition", "statement"});}</pre>
      *
      * constructs a while loop AST entry, where the valid child selectors are "condition" or
      * "statement".
@@ -733,7 +733,7 @@ implements Comparable<ASTPath>, Iterable<ASTPath.ASTEntry> {
      * Parses and constructs a new AST entry. For example, the call:
      *
      * <pre>
-     * {@code newASTEntry(Tree.Kind.CASE, new String[] {"expression", "statement"}, new String[] {"statement"});
+     * {@code newASTEntry(Tree.Kind.CASE, new String[] {"expression", "statement"}, new String[] {"statement"});}
      * </pre>
      *
      * constructs a case AST entry, where the valid child selectors are
