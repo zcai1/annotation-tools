@@ -108,7 +108,7 @@ public final class AMethod extends ADeclaration {
         sb.append("AMethod ");
         sb.append(methodName);
         sb.append(": (");
-        sb.append(" -1:");
+        sb.append(" -1:");      // receiver is parameter -1.
         sb.append(receiver.toString());
         // int size = parameters.size();
         for (Map.Entry<Integer, AField> em : parameters.entrySet()) {
