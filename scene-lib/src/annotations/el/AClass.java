@@ -22,7 +22,7 @@ public final class AClass extends ADeclaration {
         return new VivifyingMap<String, AMethod>(
                 new LinkedHashMap<String, AMethod>()) {
             @Override
-            public  AMethod createValueFor(String k) {
+            public AMethod createValueFor(String k) {
                 return new AMethod(k);
             }
 

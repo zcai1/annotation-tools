@@ -214,7 +214,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
     //  properly call the right annotationBuilder methods on its visitEnd().
     // For nested annotations, use a NestedAnnotationSceneReader that will
     //  properly call the right annotationBuilder methods on its visitEnd().
-    // For extended information, store all arguments passed in and on
+    // For extended information, store all arguments passed in; then on
     //  this.visitEnd(), handle all the information based on target type.
 
     // Type reference indicated in the constructor, if any.
@@ -295,6 +295,9 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     public AnnotationSceneReader(String desc, boolean visible, AElement aElement) {
       this(0, null, desc, visible, aElement);
+      if (trace) {
+        System.out.printf("new AnnotationSceneReader(%s, %s, %s)%n", desc, visible, aElement);
+      }
     }
 
     public AnnotationSceneReader(int typeRef, TypePath typePath,
@@ -339,7 +342,10 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visit(String name, Object value) {
-      if (trace) { System.out.printf("visit(%s, %s) on %s%n", name, value, this); }
+      if (trace) {
+        System.out.printf("AnnotationSceneReader.visit(%s, %s) on %s%n", name, value, this); 
+        new Exception().printStackTrace();
+      }
       // BasicAFT.forType(Class) expects int.class instead of Integer.class,
       // and so on for all primitives.  String.class is ok, since it has no
       // primitive type.
@@ -468,6 +474,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXTargetType(int target_type) {
+      if (trace) { System.out.printf("visitXTargetType(%s = 0x%x) in %s (%s)%n", target_type, target_type, this, this.getClass()); }
       xTargetTypeArgs.add(target_type);
     }
 
@@ -476,6 +483,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXIndex(int index) {
+      if (trace) { System.out.printf("visitXIndex(%s) in %s (%s)%n", index, this, this.getClass()); }
       xIndexArgs.add(index);
     }
 
@@ -484,6 +492,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXLength(int length) {
+      if (trace) { System.out.printf("visitXLength(%s) in %s (%s)%n", length, this, this.getClass()); }
       xLengthArgs.add(length);
     }
 
@@ -492,6 +501,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXLocation(TypePathEntry location) {
+      if (trace) { System.out.printf("visitXLocation(%s) in %s (%s)%n", location, this, this.getClass()); }
       xLocationsArgs.add(location);
     }
 
@@ -500,6 +510,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXLocationLength(int location_length) {
+      if (trace) { System.out.printf("visitXLocationLength(%s) in %s (%s)%n", location_length, this, this.getClass()); }
       xLocationLengthArgs.add(location_length);
     }
 
@@ -508,11 +519,13 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXOffset(int offset) {
+      if (trace) { System.out.printf("visitXOffset(%s) in %s (%s)%n", offset, this, this.getClass()); }
       xOffsetArgs.add(offset);
     }
 
     @Override
     public void visitXNumEntries(int num_entries) {
+      if (trace) { System.out.printf("visitXNumEntries(%s) in %s (%s)%n", num_entries, this, this.getClass()); }
     }
 
     /*
@@ -520,6 +533,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXStartPc(int start_pc) {
+      if (trace) { System.out.printf("visitXStartPc(%s) in %s (%s)%n", start_pc, this, this.getClass()); }
       xStartPcArgs.add(start_pc);
     }
 
@@ -528,6 +542,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXParamIndex(int param_index) {
+      if (trace) { System.out.printf("visitXParamIndex(%s) in %s (%s)%n", param_index, this, this.getClass()); }
       xParamIndexArgs.add(param_index);
     }
 
@@ -536,21 +551,25 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      */
     @Override
     public void visitXBoundIndex(int bound_index) {
+      if (trace) { System.out.printf("visitXBoundIndex(%s) in %s (%s)%n", bound_index, this, this.getClass()); }
       xBoundIndexArgs.add(bound_index);
     }
 
     @Override
     public void visitXTypeIndex(int type_index) {
+      if (trace) { System.out.printf("visitXTypeIndex(%s) in %s (%s)%n", type_index, this, this.getClass()); }
       xTypeIndexArgs.add(type_index);
     }
 
     @Override
     public void visitXExceptionIndex(int exception_index) {
+      if (trace) { System.out.printf("visitXExceptionIndex(%s) in %s (%s)%n", exception_index, this, this.getClass()); }
       xExceptionIndexArgs.add(exception_index);
     }
 
     @Override
     public void visitXNameAndArgsSize() {
+      if (trace) { System.out.printf("visitXNameAndArgsSize() in %s (%s)%n", this, this.getClass()); }
     }
 
     /*
@@ -715,6 +734,9 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      *  the information visited.
      */
     public Annotation makeAnnotation() {
+      if (trace) {
+        System.out.printf("makeAnnotation()%n");
+      }
       return annotationBuilder.finish();
     }
 
@@ -789,6 +811,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      * Creates the inner annotation on aElement.innerTypes.
      */
     private void handleField(AElement aElement) {
+      if (trace) { System.out.printf("handleField(%s) in %s (%s)%n", aElement, this, this.getClass()); }
       if (xLocationsArgs.isEmpty()) {
         // TODO: resolve issue once classfile format is finalized
         if (aElement instanceof AClass) {
@@ -833,6 +856,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      * Creates the local variable annotation on aMethod.
      */
     private void handleMethodLocalVariable(AMethod aMethod) {
+      if (trace) { System.out.printf("handleMethodLocalVariable(%s)%n", aMethod); }
       if (xLocationsArgs.isEmpty()) {
         aMethod.body.locals.vivify(makeLocalLocation()).type
             .tlAnnotationsHere.add(makeAnnotation());
@@ -1025,6 +1049,9 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
      * ArrayAnnotationSceneReader to add an array element instead of a field
      */
     void supplySubannotation(String fieldName, Annotation annotation) {
+      if (trace) {
+        System.out.printf("supplySubannotation(%s, %s)%n", fieldName, annotation);
+      }
       annotationBuilder.addScalarField(fieldName,
           new AnnotationAFT(annotation.def()), annotation);
     }
@@ -1065,6 +1092,9 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
       // super.visitEnd();
       if (trace) { System.out.printf("visitEnd on %s (%s)%n", this, this.getClass()); }
       Annotation a = super.makeAnnotation();
+      if (trace) {
+        System.out.printf("About to call supplySubannotation(%s, %s)%n", name, a);
+      }
       parent.supplySubannotation(name, a);
     }
   }
@@ -1174,6 +1204,9 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
 
     @Override
     void supplySubannotation(String fieldName, Annotation annotation) {
+      if (trace) {
+        System.out.printf("supplySubannotation(%s, %s)%n", fieldName, annotation);
+      }
       prepareForElement(new AnnotationAFT(annotation.def()));
       assert arrayBuilder != null;
       arrayBuilder.appendElement(annotation);
@@ -1267,7 +1300,10 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
     public AnnotationVisitor visitTypeAnnotation(int typeRef,
         TypePath typePath, String desc, boolean visible) {
       super.visitTypeAnnotation(typeRef, typePath, desc, visible);
-      if (trace) { System.out.printf("visitTypeAnnotation(%s, %s) in %s (%s)%n", desc, visible, aMethod, this, this.getClass()); }
+      if (trace) {
+        System.out.printf("visitTypeAnnotation(%s, %s, %s, %s) in %s (%s)%n", typeRef, typePath, desc, visible, aMethod, this, this.getClass());
+        new Exception().printStackTrace();
+      }
       XAnnotationVisitor av = new AnnotationSceneReader(desc, visible, aMethod);
       TypeReference typeReference = new TypeReference(typeRef);
       int targetType = typeReference.getSort();
@@ -1277,6 +1313,9 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
         av.visitTypePath(typePath);
       }
 
+      if (trace) {
+        System.out.printf("CASR.visitTypeAnnotation: targetType=%s=0x%x%n", targetType, targetType);
+      }
       switch (targetType) {
       case TypeReference.INSTANCEOF:
       case TypeReference.NEW:
@@ -1340,8 +1379,9 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
           "Unrecognized target type: " + targetType);
       }
 
-      av.visitEnd();  // ???
-      return new AnnotationSceneReader(desc, visible, aMethod);
+//      av.visitEnd();  // ???
+//      return new AnnotationSceneReader(desc, visible, aMethod);
+      return av;
     }
 
     @Override

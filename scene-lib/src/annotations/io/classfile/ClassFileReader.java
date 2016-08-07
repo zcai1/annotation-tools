@@ -31,6 +31,9 @@ public class ClassFileReader {
   @Option("-b omit annotations from bridge (compiler-created) methods")
   public static boolean ignore_bridge_methods = false;
 
+  @Option("print debugging/tracing information")
+  public static boolean debug = false;
+
   @Option("-h print usage information and exit")
   public static boolean help = false;
 
@@ -118,6 +121,9 @@ public class ClassFileReader {
           read(scene, className);
         } else {
           readFromClass(scene, className);
+        }
+        if (debug) {
+          System.out.println("scene: " + scene);
         }
         String outputFile = origName + ".jaif";
         System.out.println("printing results to : " + outputFile);

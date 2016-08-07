@@ -118,6 +118,7 @@ public abstract class ADeclaration extends AElement {
       sb.append(ae.toString());
       sb.append(' ');
     }
+    sb.append(super.toString());
     return sb.toString();
   }
 

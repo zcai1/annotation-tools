@@ -28,12 +28,14 @@ public class AnnotationBuilder {
 
     // Sometimes, we build the AnnotationDef at the very end, and sometimes
     // we have it before starting.
-    AnnotationDef def;
+    public AnnotationDef def;
 
     private String typeName;
     Set<Annotation> tlAnnotationsHere;
 
     boolean arrayInProgress = false;
+
+    boolean trace = false;
 
     boolean active = true;
 
@@ -97,6 +99,9 @@ public class AnnotationBuilder {
     }
 
     private void checkAddField(String fieldName) {
+        if (trace) {
+            System.out.printf("checkAddField(%s)%n", fieldName);
+        }
         if (!active)
             throw new IllegalStateException("Already finished");
         if (arrayInProgress)
@@ -197,20 +202,34 @@ public class AnnotationBuilder {
             assert typeName == null;
             assert fieldTypes.isEmpty();
         }
-        return new Annotation(def, fieldValues);
+        Annotation result = new Annotation(def, fieldValues);
+        if (trace) {
+            System.out.printf("AnnotationBuilder.finish => %s%n", result);
+        }
+        return result;
     }
 
     AnnotationBuilder(AnnotationDef def) {
+        if (trace) {
+            System.out.printf("new AnnotationBuilder(%s)%n", def);
+            new Throwable().printStackTrace();
+        }
         assert def != null;
         this.def = def;
     }
 
     AnnotationBuilder(String typeName) {
+        if (trace) {
+            System.out.printf("new AnnotationBuilder(%s)%n", typeName);
+        }
         assert typeName != null;
         this.typeName = typeName;
     }
 
     AnnotationBuilder(String typeName, Set<Annotation> tlAnnotationsHere) {
+        if (trace) {
+            System.out.printf("new AnnotationBuilder(%s, %s)%n", typeName, tlAnnotationsHere);
+        }
         assert typeName != null;
         this.typeName = typeName;
         this.tlAnnotationsHere = tlAnnotationsHere;

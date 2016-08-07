@@ -92,6 +92,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   // Whether to output error messages for unsupported cases
   private static final boolean strict = true;
 
+  // Debugging flag
+  private static final boolean trace = false;
+
   // None of these fields should be null, except for aClass initially.
 
   /**
@@ -216,6 +219,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
    */
   @Override
   public void visitEnd() {
+    if (trace) {
+      System.out.printf("CASW.visitEnd() on %s%n", this);
+    }
     ensureVisitSceneClassAnnotations();
     super.visitEnd();
   }
@@ -239,6 +245,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   @Override
   public AnnotationVisitor visitTypeAnnotation(int typeRef,
       TypePath typePath, String desc, boolean visible) {
+    if (trace) {
+      System.out.printf("visitTypeAnnotation(%s, %s, %s, %s)%n", typeRef, typePath, desc, visible);
+    }
     existingClassAnnotations.add(desc);
     // If annotation exists in scene, and in overwrite mode,
     //  return empty visitor, since annotation from scene will be visited later.
@@ -254,6 +263,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
    */
   private AnnotationVisitor visitTypeAnnotation(int typeRef,
       TypePath typePath, Annotation tla) {
+    if (trace) {
+      System.out.printf("visitTypeAnnotation(%s, %s, %s, %s)%n", typeRef, typePath, tla);
+    }
     return super.visitTypeAnnotation(typeRef, typePath,
         classNameToDesc(name(tla)), isRuntimeRetention(tla));
   }
@@ -263,6 +275,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
    */
   private AnnotationVisitor visitTypeAnnotation(TypeReference typeReference,
       InnerTypeLocation loc, Annotation tla) {
+    if (trace) {
+      System.out.printf("visitTypeAnnotation(%s, %s, %s, %s)%n", typeReference, loc, tla);
+    }
     int typeRef = typeReference.getValue();
     TypePath typePath = loc == null || loc.location.isEmpty() ? null
         : innerTypePath(loc);
@@ -342,6 +357,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
    * has not already visited them.
    */
   private void ensureVisitSceneClassAnnotations() {
+    if (trace) {
+      System.out.printf("CASW.ensureVisitSceneClassAnnotations on %s%n", this);
+    }
     if (!hasVisitedClassAnnotationsInScene) {
       hasVisitedClassAnnotationsInScene = true;
       for (Annotation tla : aClass.tlAnnotationsHere) {
@@ -462,11 +480,17 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
    * Has av visit the fields in the given annotation.
    */
   private void visitFields(AnnotationVisitor av, Annotation a) {
+    if (trace) {
+      System.out.printf("visitFields(%s, %s)%n", av, a);
+    }
     if (av instanceof XAnnotationVisitor) {
       ((XAnnotationVisitor) av).visitXNameAndArgsSize();
     }
     for (String fieldName : a.def().fieldTypes.keySet()) {
       Object value = a.getFieldValue(fieldName);
+      if (trace) {
+        System.out.printf("  %s = %s%n", fieldName, value);
+      }
       if (value == null) {
           // hopefully a field with a default value
           continue;
@@ -899,6 +923,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
     @Override
     public AnnotationVisitor visitTypeAnnotation(int typeRef,
         TypePath typePath, String desc, boolean visible) {
+      if (trace) {
+        System.out.printf("visitTypeAnnotation(%s, %s, %s, %s)%n", typeRef, typePath, desc, visible);
+      }
 
       existingMethodAnnotations.add(desc);
 
@@ -918,6 +945,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
      */
     private AnnotationVisitor visitTypeAnnotation(int typeRef,
         TypePath typePath, Annotation tla) {
+      if (trace) {
+        System.out.printf("visitTypeAnnotation(%s, %s, %s)%n", typeRef, typePath, tla);
+      }
       return visitTypeAnnotation(typeRef, typePath,
           classNameToDesc(name(tla)), isRuntimeRetention(tla));
     }
@@ -929,6 +959,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
     private AnnotationVisitor
     visitTypeAnnotation(TypeReference typeReference,
         InnerTypeLocation loc, Annotation tla) {
+      if (trace) {
+        System.out.printf("visitTypeAnnotation(%s, %s, %s)%n", typeReference, loc, tla);
+      }
       int typeRef = typeReference.getValue();
       TypePath typePath = loc == null || loc.location.isEmpty() ? null
           : innerTypePath(loc);
@@ -941,6 +974,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
      */
     private AnnotationVisitor
     visitTypeAnnotation(TypeReference typeReference, Annotation tla) {
+      if (trace) {
+        System.out.printf("visitTypeAnnotation(%s, %s)%n", typeReference, tla);
+      }
       return visitTypeAnnotation(typeReference, null, tla);
     }
 
@@ -1211,6 +1247,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
      * Has this visit the annotations on local variables in this method.
      */
     private void ensureVisitLocalVariablesAnnotations() {
+      if (trace) {
+        System.out.printf("CASW.ensureVisitLocalVariablesAnnotations on %s%n", this);
+      }
       for (Map.Entry<LocalLocation, AField> entry :
           aMethod.body.locals.entrySet()) {
         LocalLocation localLocation = entry.getKey();
@@ -1218,8 +1257,15 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         TypeReference typeReference =
             TypeReference.newTypeReference(TypeReference.LOCAL_VARIABLE);
         int typeRef = typeReference.getValue();
+        if (trace) {
+          System.out.printf("CASW.ensureVisitLocalVariablesAnnotations(%n  %s,%n  %s,%n  %s,%n  %s)%n",
+                            localLocation, aLocation, typeReference, typeRef);
+        }
 
         for (Annotation tla : aLocation.tlAnnotationsHere) {
+          if (trace) {
+            System.out.printf("  tla: %s%n", tla);
+          }
           if (shouldSkip(tla)) continue;
 
           AnnotationVisitor xav =
@@ -1232,6 +1278,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         }
 
         for (Annotation tla : aLocation.type.tlAnnotationsHere) {
+          if (trace) {
+            System.out.printf("  type anno: %s%n", tla);
+          }
           if (shouldSkip(tla)) continue;
 
           AnnotationVisitor xav =
@@ -1247,6 +1296,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           aLocation.type.innerTypes.entrySet()) {
           InnerTypeLocation localVariableLocation = e.getKey();
           ATypeElement aInnerType = e.getValue();
+          if (trace) {
+            System.out.printf("  localVariableLocation=%s, aInnerType=%s%n", localVariableLocation, aInnerType);
+          }
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
             if (shouldSkip(tla)) continue;
 
@@ -1737,6 +1789,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
       if (!hasVisitedCodeAnnotations) {
         hasVisitedCodeAnnotations = true;
 
+        if (trace) {
+          System.out.printf("About to call CASW.ensureVisitCodeAnnotations%n");
+        }
         ensureVisitLocalVariablesAnnotations();
         // TODO: catch clauses!?
       }

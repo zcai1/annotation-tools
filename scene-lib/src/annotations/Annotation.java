@@ -230,6 +230,8 @@ public final class Annotation {
             sb.append('(');
             sb.append(fieldValues.toString());
             sb.append(')');
+        } else {
+            sb.append("(fieldValues is empty)");
         }
         return sb.toString();
     }

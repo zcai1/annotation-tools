@@ -28,6 +28,9 @@ public class ClassFileWriter {
   @Option("print version information and exit")
   public static boolean version = false;
 
+  @Option("print debugging information")
+  public static boolean debug = false;
+
   private static String linesep = System.getProperty("line.separator");
 
   static String usage
@@ -120,6 +123,14 @@ public class ClassFileWriter {
 
       try {
         java.util.Map<String, annotations.el.AnnotationDef> defs = IndexFileParser.parseFile(indexFileName, scene);
+        if (debug) {
+          System.out.println("defs:");
+          for (String s : defs.keySet()) {
+            System.out.printf("  %s%n    %s%n", s, defs.get(s));
+          }
+          System.out.println("scene:");
+          System.out.println(scene);
+        }
       } catch (FileNotFoundException fnf) {
         System.out.printf("File not found: " + fnf.getMessage());
       }
