@@ -528,7 +528,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   }
 
   /**
-   * Has xav visit the local varialbe information in loc.
+   * Has xav visit the local variable information in loc.
    */
   private void visitLocalVar(AnnotationVisitor xav, LocalLocation loc) {
     if (xav instanceof XAnnotationVisitor) {
@@ -749,9 +749,6 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
      * Constructs a new MethodAnnotationSceneWriter with the given name and
      * description that wraps around the given MethodVisitor.
      *
-     * @param name the name of the method, as in "foo"
-     * @param desc the method signature minus the name,
-     *  as in "(Ljava/lang/String)V"
      * @param mv the method visitor to wrap around
      */
     MethodAnnotationSceneWriter(AMethod aMethod, MethodVisitor mv) {
