@@ -35,7 +35,7 @@ out1:
 # Step 2: Convert the annotated class file to an annotation file.
 # Do we get the right annotations?
 out2.jaif:
-	CLASSPATH=`pwd`/out1 ${ANNCAT} --class out1/annotations/tests/AnnotationTest.class --out --index out2.jaif
+	CLASSPATH=`pwd`/out1:../../lib/guava-15.0.jar ${ANNCAT} --class out1/annotations/tests/AnnotationTest.class --out --index out2.jaif
 
 out2.diff: out2.jaif
 	diff -u expected-annos.jaif out2.jaif > out2.diff
