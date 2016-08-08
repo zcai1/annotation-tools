@@ -64,8 +64,10 @@
 
     <target name="tags" depends="tags-scene-lib,tags-afu">
       <exec executable="etags" failonerror="true">
+        <!-- AFU's TAGS table already includes the scene-lib, so don't include it twice.
 	<arg value="-i"/>
 	<arg value="${scene-lib}/TAGS"/>
+        -->
 	<arg value="-i"/>
 	<arg value="${afu}/TAGS"/>
       </exec>
