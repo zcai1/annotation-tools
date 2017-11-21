@@ -233,7 +233,7 @@ public class Main {
         ASTPath p = entry.getKey();
         ATypeElement e = entry.getValue();
         insertAnnotations.put(p, e);
-        //visitTypeElement(e, insertAnnotations.vivify(p));
+        // visitTypeElement(e, insertAnnotations.vivify(p));
       }
       for (Map.Entry<ASTPath, ATypeElementWithType> entry :
           el0.insertTypecasts.entrySet()) {
@@ -243,10 +243,10 @@ public class Main {
         if (type instanceof type.DeclaredType
             && ((type.DeclaredType) type).getName().isEmpty()) {
           insertAnnotations.put(p, e);
-          //visitTypeElement(e, insertAnnotations.vivify(p));
+          // visitTypeElement(e, insertAnnotations.vivify(p));
         } else {
           insertTypecasts.put(p, e);
-          //visitTypeElementWithType(e, insertTypecasts.vivify(p));
+          // visitTypeElementWithType(e, insertTypecasts.vivify(p));
         }
       }
       return null;
@@ -461,7 +461,7 @@ public class Main {
         if (ins instanceof TypedInsertion) {
           TypedInsertion ti = (TypedInsertion) ins;
           if (!rec.astPath.isEmpty()) {
-            //addInnerTypePaths(decl, rec, ti, insertionSources);
+            // addInnerTypePaths(decl, rec, ti, insertionSources);
           }
           for (Insertion inner : ti.getInnerTypeInsertions()) {
             Tree t = ASTIndex.getNode(tree, rec);
@@ -554,6 +554,11 @@ public class Main {
     Map<Insertion, String> insertionOrigins = new HashMap<Insertion, String>();
     Map<String, AScene> scenes = new HashMap<String, AScene>();
 
+    // maintain imports info for annotations field
+    // Key: fully-qualified annotation name. e.g. "com.foo.Bar" for annotation @com.foo.Bar(x).
+    // Value: names of packages this annotation needs.
+    Map<String, Set<String>> annotationImports = new HashMap<>();
+
     IndexFileParser.setAbbreviate(abbreviate);
     for (String arg : file_args) {
       if (arg.endsWith(".java")) {
@@ -602,6 +607,7 @@ public class Main {
                 parsedSpec.size(), arg);
           }
           insertions.addAll(parsedSpec);
+          annotationImports.putAll(spec.annotationImports());
         } catch (RuntimeException e) {
           if (e.getCause() != null
               && e.getCause() instanceof FileNotFoundException) {
@@ -705,7 +711,7 @@ public class Main {
               AScene scene = scenes.get(arg);
               Multimap<Insertion, Annotation> insertionSources =
                   insertionIndex.get(arg);
-              //String text =
+              // String text =
               //  ins.getText(comments, abbreviate, false, 0, '\0');
 
               // TODO: adjust for missing end of path (?)
@@ -866,6 +872,13 @@ public class Main {
                   packageNames, toInsert);
               imports.addAll(packageNames);
             }
+            if (iToInsert instanceof AnnotationInsertion) {
+              AnnotationInsertion annoToInsert = (AnnotationInsertion) iToInsert;
+              Set<String> annoImports = annotationImports.get(annoToInsert.getAnnotationFullyQualifiedName());
+              if (annoImports != null) {
+                imports.addAll(annoImports);
+              }
+            }
           }
         }
       }
@@ -970,8 +983,9 @@ public class Main {
   }
 
   public static String pathToString(TreePath path) {
-    if (path == null)
+    if (path == null) {
       return "null";
+    }
     return treeToString(path.getLeaf());
   }
 

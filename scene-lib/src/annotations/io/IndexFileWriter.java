@@ -110,13 +110,15 @@ public final class IndexFileWriter {
                 // watch out--could be an empty array of unknown type
                 // (see AnnotationBuilder#addEmptyArrayField)
                 if (aaft.elementType == null) {
-                    if (l.size() != 0)
+                    if (l.size() != 0) {
                         throw new AssertionError();
+                    }
                 } else {
                     boolean first = true;
                     for (Object o2 : l) {
-                        if (!first)
+                        if (!first) {
                             pw.print(',');
+                        }
                         printValue(aaft.elementType, o2);
                         first = false;
                     }
@@ -142,8 +144,9 @@ public final class IndexFileWriter {
             boolean first = true;
             for (Map. Entry<String, Object> f
                     : a.fieldValues.entrySet()) {
-                if (!first)
+                if (!first) {
                     pw.print(',');
+                }
                 pw.print(f.getKey() + "=");
                 printValue(a.def().fieldTypes.get(f.getKey()), f.getValue());
                 first = false;
@@ -262,10 +265,11 @@ public final class IndexFileWriter {
             pw.print(indentation + INDENT + INDENT + "inner-type");
             boolean first = true;
             for (TypePathEntry l : loc.location) {
-                if (first)
+                if (first) {
                     pw.print(' ');
-                else
+                } else {
                     pw.print(',');
+                }
                 pw.print(typePathEntryToString(l));
                 first = false;
             }
@@ -382,7 +386,7 @@ public final class IndexFileWriter {
             break;
         case BOUNDED:
             type.BoundedType b = (type.BoundedType) type;
-            printType(b.getType());
+            printType(b.getName());
             pw.print(" ");
             pw.print(b.getBoundKind());
             pw.print(" ");
@@ -394,9 +398,9 @@ public final class IndexFileWriter {
             if (!d.isWildcard()) {
                 type.DeclaredType inner = d.getInnerType();
                 Iterator<type.Type> iter = d.getTypeParameters().iterator();
-                //for (String s : d.getAnnotations()) {
+                // for (String s : d.getAnnotations()) {
                 //    pw.print(s + " ");
-                //}
+                // }
                 if (iter.hasNext()) {
                     pw.print("<");
                     printType(iter.next());

@@ -311,10 +311,11 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
             : getAnnotationDef(desc);
 
         AnnotationBuilder ab = AnnotationFactory.saf.beginAnnotation(ad);
-        if (ab == null)
+        if (ab == null) {
           throw new IllegalArgumentException("bad description: " + desc);
-        else
+        } else {
           this.annotationBuilder = ab;
+        }
       }
 
       // For legal annotations, and except for xLocationsArgs, these should
@@ -815,7 +816,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
       if (xLocationsArgs.isEmpty()) {
         // TODO: resolve issue once classfile format is finalized
         if (aElement instanceof AClass) {
-          //handleFieldOnClass((AClass) aElement);
+          // handleFieldOnClass((AClass) aElement);
           if (strict) { System.err.println("Unhandled FIELD annotation for " + aElement); }
         } else if (aElement instanceof ATypeElement) {
           aElement.tlAnnotationsHere.add(makeAnnotation());
@@ -825,7 +826,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
       } else {
         // TODO: resolve issue once classfile format is finalized
         if (aElement instanceof AClass) {
-          //handleFieldGenericArrayOnClass((AClass) aElement);
+          // handleFieldGenericArrayOnClass((AClass) aElement);
           if (strict) { System.err.println("Unhandled FIELD_COMPONENT annotation for " + aElement); }
         } else if (aElement instanceof ATypeElement) {
           ATypeElement aTypeElement = (ATypeElement) aElement;
@@ -999,8 +1000,8 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
 
     private void handleNewTypeArgument(AMethod aMethod) {
       if (xLocationsArgs.isEmpty()) {
-        //aMethod.news.vivify(makeOffset()).innerTypes.vivify();
-            //makeInnerTypeLocation()).tlAnnotationsHere.add(makeAnnotation());
+        // aMethod.news.vivify(makeOffset()).innerTypes.vivify();
+            // makeInnerTypeLocation()).tlAnnotationsHere.add(makeAnnotation());
         if (strict) { System.err.println("Unhandled handleNewTypeArgument on aMethod: " + aMethod); }
       } else {
         // if (strict) { System.err.println("Unhandled handleNewTypeArgumentGenericArray on aMethod: " + aMethod); }
@@ -1041,7 +1042,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
     }
 
     private void handleMethodTypeParameter(AMethod aMethod) {
-      //TODO: throw new RuntimeException("METHOD_TYPE_PARAMETER: to do");
+      // TODO: throw new RuntimeException("METHOD_TYPE_PARAMETER: to do");
     }
 
     /*
@@ -1161,7 +1162,7 @@ public class ClassAnnotationSceneReader extends CodeOffsetAdapter {
       } else {
         Class<?> vc = value.getClass();
         aft = BasicAFT.forType(vc);
-        //or: aft = (ScalarAFT) AnnotationFieldType.fromClass(vc, null);
+        // or: aft = (ScalarAFT) AnnotationFieldType.fromClass(vc, null);
       }
       assert aft != null;
       prepareForElement(aft);

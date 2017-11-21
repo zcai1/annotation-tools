@@ -6,7 +6,6 @@ import java.util.List;
 import javax.lang.model.type.TypeKind;
 
 import annotations.el.InnerTypeLocation;
-//only used for debugging
 import annotator.Main;
 
 import com.sun.source.tree.AnnotatedTypeTree;
@@ -76,7 +75,7 @@ public class GenericArrayLocationCriterion implements Criterion {
    * Determines if the given list holds only {@link TypePathEntry}s with the tag
    * {@link TypePathEntryKind#ARRAY}.
    *
-   * @param location The list to check.
+   * @param location the list to check
    * @return {@code true} if the list only contains
    *         {@link TypePathEntryKind#ARRAY}, {@code false} otherwise.
    */
@@ -256,7 +255,7 @@ public class GenericArrayLocationCriterion implements Criterion {
         locationRemaining.remove(locationRemaining.size()-1);
         leaf = fieldAccess.selected;
         pathRemaining = parentPath;
-            //TreePath.getPath(pathRemaining.getCompilationUnit(), leaf);
+            // TreePath.getPath(pathRemaining.getCompilationUnit(), leaf);
       } else if (loc.tag == TypePathEntryKind.WILDCARD
           && leaf.getKind() == Tree.Kind.UNBOUNDED_WILDCARD) {
         // Check if the leaf is an unbounded wildcard instead of the parent, since unbounded
@@ -300,8 +299,8 @@ public class GenericArrayLocationCriterion implements Criterion {
         locationRemaining.remove(i--);
         while (inner.getKind() == Tree.Kind.MEMBER_SELECT
             && !isStatic((JCFieldAccess) inner)) {
-          //fieldAccess.type != null && fieldAccess.type.getKind() == TypeKind.DECLARED
-          //&& fieldAccess.type.tsym.isStatic()
+          // fieldAccess.type != null && fieldAccess.type.getKind() == TypeKind.DECLARED
+          // && fieldAccess.type.tsym.isStatic()
           // TODO: check whether MEMBER_SELECT indicates inner or qualifier?
           if (i < 0) { break; }
           if (locationRemaining.get(i).tag != TypePathEntryKind.INNER_TYPE) {
@@ -505,7 +504,7 @@ public class GenericArrayLocationCriterion implements Criterion {
   /**
    * Gets the type path location of this criterion.
    *
-   * @return an unmodifiable list of {@link TypePathEntry}s.
+   * @return an unmodifiable list of {@link TypePathEntry}s
    */
   public List<TypePathEntry> getLocation() {
     return Collections.unmodifiableList(location);

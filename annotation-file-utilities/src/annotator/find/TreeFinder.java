@@ -946,7 +946,7 @@ loop:
    * Determines if the last {@link TypePathEntry} in the given list is a
    * {@link TypePathEntryKind#WILDCARD}.
    *
-   * @param location the list to check.
+   * @param location the list to check
    * @return {@code true} if the last {@link TypePathEntry} is a
    *         {@link TypePathEntryKind#WILDCARD}, {@code false} otherwise.
    */
@@ -1315,8 +1315,7 @@ loop:
         Tree parent = path.getParentPath().getLeaf();
         insertRecord = insertRecord.extend(Tree.Kind.METHOD, ASTPath.PARAMETER, -1);
         pos = ((JCTree) parent).getEndPosition(tree.endPositions) - 1;
-      } else
-      if (node.getKind() == Tree.Kind.METHOD
+      } else if (node.getKind() == Tree.Kind.METHOD
           && entry.childSelectorIs(ASTPath.TYPE)) {
         JCMethodDecl jcnode = (JCMethodDecl) node;
         Tree returnType = jcnode.getReturnType();
@@ -1509,8 +1508,8 @@ loop:
    * Determines if the annotation in the given insertion is already present
    * at the given location in the AST.
    *
-   * @param path The location in the AST to check for the annotation.
-   * @param ins The annotation to check for.
+   * @param path the location in the AST to check for the annotation
+   * @param ins the annotation to check for
    * @return {@code true} if the given annotation is already at the given
    *         location in the AST, {@code false} otherwise.
    */
@@ -1590,8 +1589,8 @@ loop:
 
   /**
    * Reports an error inserting an insertion to {@code System.err}.
-   * @param i The insertion that caused the error.
-   * @param e The error. If there's a message it will be printed.
+   * @param i the insertion that caused the error
+   * @param e the error. If there's a message it will be printed.
    */
   public static void reportInsertionError(Insertion i, Throwable e) {
     System.err.println("Error processing insertion:");
@@ -1615,9 +1614,9 @@ loop:
    * already exist in the source code. This will also add the annotations to be
    * inserted to the correct part of the receiver type.
    *
-   * @param path The location in the AST to insert the receiver.
-   * @param receiver Details of the receiver to insert.
-   * @param method The method the receiver is being inserted into.
+   * @param path the location in the AST to insert the receiver
+   * @param receiver details of the receiver to insert
+   * @param method the method the receiver is being inserted into
    */
   private void addReceiverType(TreePath path, ReceiverInsertion receiver,
       MethodTree method) {
@@ -1792,7 +1791,9 @@ loop:
     List<? extends Tree> typeDecls = node.getTypeDecls();
     for (Insertion i : uninserted) {
       InClassCriterion c = i.getCriteria().getInClass();
-      if (c == null) continue;
+      if (c == null) {
+        continue;
+      }
       for (Tree t : typeDecls) {
         if (c.isSatisfiedBy(TreePath.getPath(node, t))) {
           // Avoid warnings about synthetic generated methods.

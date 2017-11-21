@@ -15,12 +15,12 @@ import annotations.io.classfile.ClassFileReader;
 import annotations.io.classfile.ClassFileWriter;
 import plume.FileIOException;
 
-/** Concatenates multiple descriptions of annotations into a single one. **/
+/** Concatenates multiple descriptions of annotations into a single one. */
 public class Anncat {
     private static void usage() {
         System.err.print(
                 "anncat, part of the Annotation File Utilities\n" +
-                "(http://types.cs.washington.edu/annotation-file-utilities/)\n" +
+                "(https://checkerframework.org/annotation-file-utilities/)\n" +
                 "usage: anncat <inspec>* [ --out <outspec> ], where:\n" +
                 "    <inspec> ::=\n" +
                 "        ( --javap <in.javap> )\n" +
@@ -77,8 +77,9 @@ public class Anncat {
                     System.err.println("Reading class file " + infile + "...");
                     ClassFileReader.read(theScene, infile);
                     System.err.println("Finished.");
-                } else
+                } else {
                     usageAssert(false);
+                }
             }
 
             // Write the scene
@@ -107,8 +108,9 @@ public class Anncat {
                         overwrite = true;
                         idx++;
                         usageAssert(idx < args.length);
-                    } else
+                    } else {
                         overwrite = false;
+                    }
                     String origfile = args[idx];
                     idx++;
                     if (idx < args.length) {
@@ -127,8 +129,9 @@ public class Anncat {
                         ClassFileWriter.insert(theScene, origfile, overwrite);
                         System.err.println("Finished.");
                     }
-                } else
+                } else {
                     usageAssert(false);
+                }
             }
 
         } catch (FileIOException e) {

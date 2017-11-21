@@ -5,8 +5,8 @@
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
 	<classpathentry kind="lib" path="junit.jar"/>
-	<classpathentry combineaccessrules="false" kind="src" path="/plume-lib"/>
-	<classpathentry kind="lib" path="/annotation-file-utilities/lib/guava-15.0.jar"/>
+	<classpathentry kind="lib" path="/annotation-file-utilities/lib/guava-20.0.jar"/>
+	<classpathentry kind="lib" path="/annotation-file-utilities/lib/plume-core.jar"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/asm"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

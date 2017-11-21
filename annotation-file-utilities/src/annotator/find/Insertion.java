@@ -93,7 +93,7 @@ public abstract class Insertion {
      * {@code precedingChar} parameters.
      *
      * @param comments
-     *            if true, Java 8 features will be surrounded in comments.
+     *            if true, Java 8 features will be surrounded in comments
      * @param abbreviate
      *            if true, the package name will be removed from the annotations.
      *            The package name can be retrieved again by calling the
@@ -102,7 +102,7 @@ public abstract class Insertion {
      *            {@code true} if this insertion is actually added on a separate
      *            line.
      * @param pos
-     *            the source position where this insertion will be inserted.
+     *            the source position where this insertion will be inserted
      * @param precedingChar
      *            the character directly preceding where this insertion will be
      *            inserted. This value will be ignored if {@code pos} is 0.
@@ -127,7 +127,7 @@ public abstract class Insertion {
      * Gets the insertion text.
      *
      * @param comments
-     *            if true, Java 8 features will be surrounded in comments.
+     *            if true, Java 8 features will be surrounded in comments
      * @param abbreviate
      *            if true, the package name will be removed from the annotations.
      *            The package name can be retrieved again by calling the
@@ -144,7 +144,7 @@ public abstract class Insertion {
      *            {@code true} if this insertion is actually added on a separate
      *            line.
      * @param pos
-     *            the source position where this insertion will be inserted.
+     *            the source position where this insertion will be inserted
      * @param precedingChar
      *            the character directly preceding where this insertion will be
      *            inserted. This value will be ignored if {@code pos} is 0.
@@ -180,7 +180,7 @@ public abstract class Insertion {
     /**
      * Gets the package name.
      *
-     * @return The package name of the annotation being inserted by this
+     * @return the package name of the annotation being inserted by this
      *         Insertion. This will be empty unless
      *         {@link #getText(boolean, boolean)} is called with abbreviate true.
      */
@@ -278,7 +278,7 @@ public abstract class Insertion {
      * @param type
      *            the type to convert
      * @param comments
-     *            if true, Java 8 features will be surrounded in comments.
+     *            if true, Java 8 features will be surrounded in comments
      * @param abbreviate
      *            if true, the package name will be removed from the annotations.
      *            The package name can be retrieved again by calling the
@@ -330,7 +330,7 @@ public abstract class Insertion {
             break;
         case BOUNDED:
             BoundedType boundedType = (BoundedType) type;
-            result.append(typeToString(boundedType.getType(), comments, abbreviate));
+            result.append(typeToString(boundedType.getName(), comments, abbreviate));
             result.append(' ');
             result.append(boundedType.getBoundKind());
             result.append(' ');
@@ -352,7 +352,7 @@ public abstract class Insertion {
      *            directly on the type will be written. Subtypes will be
      *            ignored.
      * @param result
-     *            where to write the annotations.
+     *            where to write the annotations
      * @param comments
      *            if {@code true}, Java 8 features will be surrounded in
      *            comments.
@@ -378,12 +378,12 @@ public abstract class Insertion {
      * type, based on the insertion's type path.
      *
      * @param innerTypeInsertions
-     *          The insertions to add to the type. These must be inner type
+     *          the insertions to add to the type. These must be inner type
      *          insertions, meaning each of the insertions' {@link Criteria}
      *          must contain a {@link GenericArrayLocationCriterion} and
      *          {@link GenericArrayLocationCriterion#getLocation()} must return a
      *          non-empty list.
-     * @param outerType The type to add the insertions to.
+     * @param outerType the type to add the insertions to
      */
     public static void decorateType(List<Insertion> innerTypeInsertions, final Type outerType) {
         decorateType(innerTypeInsertions, outerType, null);
@@ -472,7 +472,7 @@ public abstract class Insertion {
                 }
                 if (type.getKind() == Type.Kind.BOUNDED) {
                     // Annotations aren't allowed directly on the BoundedType, see BoundedType
-                    type = ((BoundedType) type).getType();
+                    type = ((BoundedType) type).getName();
                 }
                 type.addAnnotation(annos);
             } catch (Throwable e) {
@@ -483,7 +483,7 @@ public abstract class Insertion {
 
     private static void decorateType(ASTPath astPath,
             String annos, Type type, ASTPath outerPath) {
-        //type.addAnnotation(annos);  // TODO
+        // type.addAnnotation(annos);  // TODO
         Iterator<ASTPath.ASTEntry> ii = astPath.iterator();
         Iterator<ASTPath.ASTEntry> oi = outerPath.iterator();
 
@@ -547,7 +547,7 @@ public abstract class Insertion {
         }
         if (type.getKind() == Type.Kind.BOUNDED) {
             // Annotations aren't allowed directly on the BoundedType, see BoundedType
-            type = ((BoundedType) type).getType();
+            type = ((BoundedType) type).getName();
         }
         type.addAnnotation(annos);
     }

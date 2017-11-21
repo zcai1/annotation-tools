@@ -79,8 +79,9 @@ public class AnnotationBuilder {
         }
 
         public void appendElement(Object x) {
-            if (!abActive)
+            if (!abActive) {
                 throw new IllegalStateException("Array is finished");
+            }
             if (!aft.isValidValue(x)) {
                 throw new IllegalArgumentException(String.format("Bad array element value%n  %s (%s)%nfor field %s%n  %s (%s)",
                                                                  x, x.getClass(), fieldName, aft, aft.getClass()));
@@ -89,8 +90,9 @@ public class AnnotationBuilder {
         }
 
         public void finish() {
-            if (!abActive)
+            if (!abActive) {
                 throw new IllegalStateException("Array is finished");
+            }
             fieldValues.put(fieldName, Collections
                             .<Object>unmodifiableList(arrayElements));
             arrayInProgress = false;
@@ -102,13 +104,16 @@ public class AnnotationBuilder {
         if (trace) {
             System.out.printf("checkAddField(%s)%n", fieldName);
         }
-        if (!active)
+        if (!active) {
             throw new IllegalStateException("Already finished");
-        if (arrayInProgress)
+        }
+        if (arrayInProgress) {
             throw new IllegalStateException("Array in progress");
-        if (fieldValues.containsKey(fieldName))
+        }
+        if (fieldValues.containsKey(fieldName)) {
             throw new IllegalArgumentException("Duplicate field \'"
                                                + fieldName + "\' in " + fieldValues);
+        }
     }
 
     /**
@@ -124,8 +129,9 @@ public class AnnotationBuilder {
      */
     public void addScalarField(String fieldName, ScalarAFT aft, Object x) {
         checkAddField(fieldName);
-        if (x instanceof Annotation && !(x instanceof Annotation))
+        if (x instanceof Annotation && !(x instanceof Annotation)) {
             throw new IllegalArgumentException("All subannotations must be Annotations");
+        }
         if (def == null) {
             fieldTypes.put(fieldName, aft);
         }
@@ -190,10 +196,12 @@ public class AnnotationBuilder {
      * made on this {@link AnnotationBuilder}.
      */
     public Annotation finish() {
-        if (!active)
+        if (!active) {
             throw new IllegalStateException("Already finished: " + this);
-        if (arrayInProgress)
+        }
+        if (arrayInProgress) {
             throw new IllegalStateException("Array in progress: " + this);
+        }
         active = false;
         if (def == null) {
             assert fieldTypes != null;
@@ -238,8 +246,9 @@ public class AnnotationBuilder {
     public String toString() {
         if (def != null) {
             return String.format("AnnotationBuilder %s", def);
-        } else
+        } else {
             return String.format("(AnnotationBuilder %s : %s)", typeName, tlAnnotationsHere);
+        }
     }
 
 }

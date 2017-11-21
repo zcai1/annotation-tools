@@ -365,8 +365,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
       for (Annotation tla : aClass.tlAnnotationsHere) {
         // If not in overwrite mode and annotation already exists in classfile,
         //  ignore tla.
-        if ((!overwrite) && existingClassAnnotations.contains(name(tla)))
+        if ((!overwrite) && existingClassAnnotations.contains(name(tla))) {
           continue;
+        }
 
         AnnotationVisitor av = visitAnnotation(tla);
         visitFields(av, tla);
@@ -443,6 +444,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
   static boolean isRuntimeRetention(Annotation tla) {
     if (tla.def.retention() == null)
       return false; // TODO: temporary
+    }
     return tla.def.retention().equals(RetentionPolicy.RUNTIME);
   }
 
@@ -1147,7 +1149,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
     private void ensureVisitMethodDeclarationAnnotations() {
       // Annotations on method declaration.
       for (Annotation tla : aMethod.tlAnnotationsHere) {
-        if (shouldSkip(tla)) continue;
+        if (shouldSkip(tla)) {
+          continue;
+        }
 
         AnnotationVisitor av = visitAnnotation(tla);
         visitFields(av, tla);
@@ -1164,7 +1168,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           TypeReference.newTypeReference(TypeReference.METHOD_RETURN);
       // Standard annotations on return type.
       for (Annotation tla : aMethod.returnType.tlAnnotationsHere) {
-        if (shouldSkip(tla)) continue;
+        if (shouldSkip(tla)) {
+          continue;
+        }
 
         AnnotationVisitor av = visitTypeAnnotation(typeReference, tla);
         visitTargetType(av, TargetType.METHOD_RETURN);
@@ -1266,7 +1272,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           if (trace) {
             System.out.printf("  tla: %s%n", tla);
           }
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor xav =
               visitLocalVariableAnnotation(typeRef, localLocation, tla);
@@ -1300,7 +1308,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
             System.out.printf("  localVariableLocation=%s, aInnerType=%s%n", localVariableLocation, aInnerType);
           }
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav = visitLocalVariableAnnotation(typeRef,
                 localVariableLocation, localLocation, tla);
@@ -1336,7 +1346,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         int offset = entry.getKey().offset;
         ATypeElement aNew = entry.getValue();
         for (Annotation tla : aNew.tlAnnotationsHere) {
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor xav = visitTypeAnnotation(typeReference, tla);
           visitTargetType(xav, TargetType.NEW);
@@ -1352,7 +1364,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           InnerTypeLocation aNewLocation = e.getKey();
           ATypeElement aInnerType = e.getValue();
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav = visitTypeAnnotation(typeReference,
                 aNewLocation, tla);
@@ -1381,7 +1395,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
 
         // First visit declaration annotations on the parameter
         for (Annotation tla : aParameter.tlAnnotationsHere) {
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor av = visitParameterAnnotation(tla, index);
           visitFields(av, tla);
@@ -1390,7 +1406,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
 
         // Then handle type annotations targeting the parameter
         for (Annotation tla : aParameter.type.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor av = visitTypeAnnotation(typeReference, tla);
             visitTargetType(av, TargetType.METHOD_FORMAL_PARAMETER);
@@ -1406,7 +1424,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           InnerTypeLocation aParameterLocation = e.getKey();
           ATypeElement aInnerType = e.getValue();
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav = visitTypeAnnotation(typeReference,
                 aParameterLocation, tla);
@@ -1432,7 +1452,7 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           TypeReference.newTypeReference(TypeReference.METHOD_RECEIVER);
       AField aReceiver = aMethod.receiver;
 
-      //for (Annotation tla : aReceiver.tlAnnotationsHere) {
+      // for (Annotation tla : aReceiver.tlAnnotationsHere) {
       //  if (shouldSkip(tla)) continue;
       //
       //  AnnotationVisitor av = visitTypeAnnotation(tla, false);  // FIXME
@@ -1440,10 +1460,12 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
       //  visitLocations(av, InnerTypeLocation.EMPTY_INNER_TYPE_LOCATION);
       //  visitFields(av, tla);
       //  av.visitEnd();
-      //}
+      // }
 
       for (Annotation tla : aReceiver.type.tlAnnotationsHere) {
-        if (shouldSkip(tla)) continue;
+        if (shouldSkip(tla)) {
+          continue;
+        }
 
         AnnotationVisitor xav = visitTypeAnnotation(typeReference, tla);
         visitTargetType(xav, TargetType.METHOD_RECEIVER);
@@ -1458,7 +1480,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
         InnerTypeLocation aReceiverLocation = e.getKey();
         ATypeElement aInnerType = e.getValue();
         for (Annotation tla : aInnerType.tlAnnotationsHere) {
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor xav = visitTypeAnnotation(typeReference,
               aReceiverLocation, tla);
@@ -1494,7 +1518,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
                 typeIndex);
 
         for (Annotation tla : aTypecast.tlAnnotationsHere) {
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor xav = visitTypeAnnotation(typeReference, tla);
           visitTargetType(xav, TargetType.CAST);
@@ -1511,7 +1537,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           InnerTypeLocation aTypecastLocation = e.getKey();
           ATypeElement aInnerType = e.getValue();
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav = visitTypeAnnotation(typeReference,
                 aTypecastLocation, tla);
@@ -1548,7 +1576,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
             TypeReference.newTypeReference(TypeReference.INSTANCEOF);
 
         for (Annotation tla : aTypeTest.tlAnnotationsHere) {
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor xav = visitTypeAnnotation(typeReference, tla);
           visitTargetType(xav, TargetType.INSTANCEOF);
@@ -1564,7 +1594,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           InnerTypeLocation aTypeTestLocation = e.getKey();
           AElement aInnerType = e.getValue();
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav = visitTypeAnnotation(typeReference,
                 aTypeTestLocation, tla);
@@ -1590,8 +1622,8 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           if (strict) { System.err.println("ClassAnnotationSceneWriter.ensureMemberReferenceAnnotations: no bytecode offset found!"); }
           continue;
         }
-        //int offset = entry.getKey().offset;
-        //int typeIndex = entry.getKey().type_index;
+        // int offset = entry.getKey().offset;
+        // int typeIndex = entry.getKey().type_index;
         AMethod aLambda = entry.getValue();
 
         for (Map.Entry<Integer, AField> e0 : aLambda.parameters.entrySet()) {
@@ -1601,7 +1633,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
               TypeReference.newFormalParameterReference(index);
 
           for (Annotation tla : aParameter.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor av = visitParameterAnnotation(tla, index);
             visitFields(av, tla);
@@ -1609,12 +1643,14 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           }
 
           for (Annotation tla : aParameter.type.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav = visitTypeAnnotation(typeReference, tla);
             visitTargetType(xav, TargetType.METHOD_FORMAL_PARAMETER);
-            //visitOffset(xav, offset);
-            //visitTypeIndex(xav, typeIndex);
+            // visitOffset(xav, offset);
+            // visitTypeIndex(xav, typeIndex);
             visitParameterIndex(xav, index);
             visitLocations(xav, InnerTypeLocation.EMPTY_INNER_TYPE_LOCATION);
             visitFields(xav, tla);
@@ -1626,13 +1662,15 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
             InnerTypeLocation aParameterLocation = e1.getKey();
             ATypeElement aInnerType = e1.getValue();
             for (Annotation tla : aInnerType.tlAnnotationsHere) {
-              if (shouldSkip(tla)) continue;
+              if (shouldSkip(tla)) {
+                continue;
+              }
 
               AnnotationVisitor xav = visitTypeAnnotation(typeReference,
                   aParameterLocation, tla);
               visitTargetType(xav, TargetType.METHOD_FORMAL_PARAMETER);
-              //visitOffset(xav, offset);
-              //visitTypeIndex(xav, typeIndex);
+              // visitOffset(xav, offset);
+              // visitTypeIndex(xav, typeIndex);
               visitParameterIndex(xav, index);
               visitLocations(xav, aParameterLocation);
               visitFields(xav, tla);
@@ -1669,7 +1707,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
             TypeReference.newTypeArgumentReference(sort, offset);
 
         for (Annotation tla : aTypeArg.tlAnnotationsHere) {
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor xav = visitTypeAnnotation(typeReference, tla);
           visitTargetType(xav, tt);
@@ -1686,7 +1726,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           InnerTypeLocation aTypeArgLocation = e.getKey();
           AElement aInnerType = e.getValue();
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav = visitTypeAnnotation(typeReference,
                 aTypeArgLocation, tla);
@@ -1723,7 +1765,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
             tt.targetTypeValue());
 
         for (Annotation tla : aCall.tlAnnotationsHere) {
-          if (shouldSkip(tla)) continue;
+          if (shouldSkip(tla)) {
+            continue;
+          }
 
           AnnotationVisitor xav = visitTypeAnnotation(typeReference, tla);
           visitTargetType(xav, tt);
@@ -1740,7 +1784,9 @@ public class ClassAnnotationSceneWriter extends CodeOffsetAdapter {
           InnerTypeLocation aCallLocation = e.getKey();
           AElement aInnerType = e.getValue();
           for (Annotation tla : aInnerType.tlAnnotationsHere) {
-            if (shouldSkip(tla)) continue;
+            if (shouldSkip(tla)) {
+              continue;
+            }
 
             AnnotationVisitor xav =
                 visitTypeAnnotation(typeReference, aCallLocation, tla);

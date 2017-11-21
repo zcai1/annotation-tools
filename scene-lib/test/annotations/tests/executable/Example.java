@@ -18,7 +18,7 @@ import annotations.io.*;
  * <pre>
  * java Example <i>input.jaif</i> <i>ClassToProcess</i> <i>output.jaif</i>
  * </pre>
- **/
+ */
 public class Example {
   public static void main(String [] args) {
     AScene scene;
@@ -54,12 +54,13 @@ public class Example {
       AMethod method = me.getValue();
 
       Annotation rro = method.receiver.type.lookup("Tainted");
-      if (rro == null)
+      if (rro == null) {
         System.out.println("Method " + me.getKey()
             + " might modify the receiver");
-      else
+      } else {
         System.out.println("Method " + me.getKey()
             + " must not modify the receiver");
+      }
 
       ATypeElement paramType1 = method.parameters.vivify(0).type;
       Annotation p1nn = paramType1.lookup("NonNull");

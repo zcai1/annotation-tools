@@ -62,7 +62,10 @@ public final class AScene implements Cloneable {
     /**
      * Contains for each annotation type a set of imports to be added to
      *  the source if the annotation is inserted with the "abbreviate"
-     *  option on.
+     *  option on.<br>
+     *  <strong>Key</strong>: fully-qualified name of an annotation. e.g. for <code>@com.foo.Bar(x)</code>,
+     *  the fully-qualified name is <code>com.foo.Bar</code> <br>
+     *  <strong>Value</strong>: names of packages this annotation needs
      */
     public final Map<String, Set<String>> imports =
         new LinkedHashMap<String, Set<String>>();
@@ -154,7 +157,7 @@ public final class AScene implements Cloneable {
         return classes.prune() & packages.prune();
     }
 
-    /** Returns a string representation. **/
+    /** Returns a string representation. */
     public String unparse() {
         StringBuilder sb = new StringBuilder();
         sb.append("packages:\n");

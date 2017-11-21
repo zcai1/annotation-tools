@@ -78,7 +78,7 @@ public class AnnotationVerifier {
    * be called if both visitors have already visited a class.
    *
    * @throws AnnotationMismatchException if the two visitors have not visited
-   * two versions of the same class that contain idential annotations.
+   * two versions of the same class that contain idential annotations
    */
   public void verify() {
     if (!newVisitor.getRecorder().name.equals(originalVisitor.getRecorder().name)) {
@@ -113,7 +113,7 @@ public class AnnotationVerifier {
     private Map<String, AnnotationRecorder> anns;
     private Map<String, AnnotationRecorder> xanns;
 
-    //method specific annotations
+    // method specific annotations
     private Set<AnnotationRecorder> danns; // default annotations
     private Map<ParameterDescription, AnnotationRecorder> panns; // parameter annotations
 
@@ -510,8 +510,9 @@ public class AnnotationVerifier {
     }
 
     public void visitXBoundIndex(int bound_index) {
-      if (bound_index != -1)
+      if (bound_index != -1) {
         xBoundIndexArgs.add(bound_index);
+      }
     }
 
     public void visitXExceptionIndex(int except_index) {
@@ -696,7 +697,7 @@ public class AnnotationVerifier {
     /**
      * Constructs a new AnnotationMismatchException with the given error message.
      *
-     * @param msg the error as to why the annotations do not match.
+     * @param msg the error as to why the annotations do not match
      */
     public AnnotationMismatchException(String msg) {
       super(msg);
