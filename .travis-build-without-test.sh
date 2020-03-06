@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo Entering "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
+echo Entering "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`
 
 # Fail the whole script if any command fails
 set -e
@@ -17,7 +17,10 @@ export AFU="${AFU:-$(cd annotation-file-utilities && pwd -P)}"
 
 export PATH=$AFU/scripts:$JAVA_HOME/bin:$PATH
 
+## Download Gradle itself if necessary (retry in case of network lossage).
+(cd ${AFU} && TERM=dumb timeout 300 ./gradlew help </dev/null >/dev/null 2>&1 || TERM=dumb ./gradlew help </dev/null >/dev/null 2>&1)
+
 ## Compile
 (cd ${AFU} && ./gradlew assemble)
 
-echo Exiting "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
+echo Exiting "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`

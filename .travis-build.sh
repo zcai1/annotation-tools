@@ -1,6 +1,6 @@
 #!/bin/bash
 
-echo Entering "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
+echo Entering "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`
 
 # Optional argument $1 is one of:
 #   all, test, typecheck, misc, downstream
@@ -34,9 +34,9 @@ export SHELLOPTS
 set -e
 
 if [ -d "/tmp/plume-scripts" ] ; then
-  git -C /tmp/plume-scripts pull -q > /dev/null 2>&1
+  (cd /tmp/plume-scripts && git pull -q) > /dev/null 2>&1
 else
-  git -C /tmp clone --depth 1 -q https://github.com/plume-lib/plume-scripts.git
+  (cd /tmp && git clone --depth 1 -q https://github.com/plume-lib/plume-scripts.git)
 fi
 
 if [[ "${GROUP}" == "test" || "${GROUP}" == "all" ]]; then
@@ -78,4 +78,4 @@ if [[ "${GROUP}" == "downstream" || "${GROUP}" == "all" ]]; then
     (cd ../checker-framework/framework && ../gradlew wholeProgramInferenceTests)
 fi
 
-echo Exiting "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")"
+echo Exiting "$(cd "$(dirname "$0")" && pwd -P)/$(basename "$0")" in `pwd`
