@@ -1,7 +1,22 @@
+# Workaround for https://status.dev.azure.com/_event/179641421
+trigger:
+  branches:
+    include:
+    - '*'
+  batch: true
+pr:
+  branches:
+    include:
+    - '*'
+## Version without the workaround
+# trigger:
+#   batch: true
+
+
 jobs:
 - job: like_travis_build_without_test_jdk8
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   container: mdernst/cf-ubuntu-jdk8:latest
   steps:
   - checkout: self
@@ -10,7 +25,7 @@ jobs:
     displayName: .travis-build-without-test.sh
 - job: ant_test_jdk8
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   container: mdernst/cf-ubuntu-jdk8:latest
   steps:
   - checkout: self
@@ -19,7 +34,7 @@ jobs:
     displayName: test-allTests.sh
 - job: typecheck_jdk8
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   container: mdernst/cf-ubuntu-jdk8:latest
   steps:
   - checkout: self
@@ -28,7 +43,7 @@ jobs:
     displayName: test-typecheck.sh
 - job: misc_jdk8
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   container: mdernst/cf-ubuntu-jdk8-plus:latest
   steps:
   - checkout: self
@@ -37,13 +52,10 @@ jobs:
     displayName: test-misc.sh
 - job: downstream_jdk8
   pool:
-    vmImage: 'ubuntu-16.04'
+    vmImage: 'ubuntu-latest'
   container: mdernst/cf-ubuntu-jdk8:latest
   steps:
   - checkout: self
     fetchDepth: 25
   - bash: ./annotation-file-utilities/dev-scripts/test-downstream.sh
     displayName: test-downstream.sh
-
-trigger:
-  batch: true
