@@ -1,9 +1,11 @@
 package scenelib.annotations.el;
 
+import org.checkerframework.checker.signature.qual.BinaryName;
 import java.io.File;
-import java.util.*;
 import java.lang.annotation.RetentionPolicy;
 import java.lang.reflect.Method;
+import java.util.*;
+import java.util.StringJoiner;
 
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -25,7 +27,7 @@ public final class AnnotationDef extends AElement {
      * The binary name of the annotation type, such as
      * "foo.Bar$Baz" for inner class Baz in class Bar in package foo.
      */
-    public final String name;
+    public final @BinaryName String name;
 
     /**
      * A map of the names of this annotation type's fields to their types. Since
@@ -44,7 +46,7 @@ public final class AnnotationDef extends AElement {
      * @param name the binary name of the annotation type
      * @param source where the annotation came from, such as a filename
      */
-    public AnnotationDef(String name, String source) {
+    public AnnotationDef(@BinaryName String name, String source) {
         super("annotation: " + name);
         assert name != null;
         assert source != null;
@@ -62,7 +64,8 @@ public final class AnnotationDef extends AElement {
      * @return an AnnotationDef for the given annotation type
      */
     public static AnnotationDef fromClass(Class<? extends java.lang.annotation.Annotation> annoType, Map<String,AnnotationDef> adefs) {
-        String name = annoType.getName();
+        @SuppressWarnings("signature:assignment.type.incompatible") // not an array, so ClassGetName => BinaryName
+        @BinaryName        String name = annoType.getName();
         assert name != null;
 
         if (adefs.containsKey(name)) {
@@ -94,7 +97,14 @@ public final class AnnotationDef extends AElement {
         return result;
     }
 
-    public AnnotationDef(String name, Set<Annotation> tlAnnotationsHere, String source) {
+    /**
+     * Constructs an empty (so far) annotation definition.
+     *
+     * @param name the binary name of the annotation
+     * @param tlAnnotationsHere the meta-annotations that are directly on the annotation definition
+     * @param source where the annotation came from, such as a filename
+     */
+    public AnnotationDef(@BinaryName String name, Set<Annotation> tlAnnotationsHere, String source) {
         super("annotation: " + name);
         assert name != null;
         assert source != null;
@@ -110,11 +120,12 @@ public final class AnnotationDef extends AElement {
      * Uses {@link #setFieldTypes} to protect the
      * immutability of the annotation definition.
      *
-     * @param name the fully-qualified type name of the annotation
+     * @param name the binary name of the annotation
+     * @param tlAnnotationsHere the meta-annotations that are directly on the annotation definition
      * @param fieldTypes the annotation's element types
      * @param source where the annotation came from, such as a filename
      */
-    public AnnotationDef(String name, Set<Annotation> tlAnnotationsHere, Map<String, ? extends AnnotationFieldType> fieldTypes, String source) {
+    public AnnotationDef(@BinaryName String name, Set<Annotation> tlAnnotationsHere, Map<String, ? extends AnnotationFieldType> fieldTypes, String source) {
         this(name, tlAnnotationsHere, source);
         setFieldTypes(fieldTypes);
     }
@@ -195,6 +206,11 @@ public final class AnnotationDef extends AElement {
      * True if this is valid in type annotation locations.
      * It was meta-annotated with @Target({ElementType.TYPE_USE, ...}).
      *
+     * Returns true if this is valid in type annotation locations and
+     * (possibly) declaration locations.  To test whether this is
+     * valid only in type annotation locations and not in declaration
+     * locations, use {@link #isOnlyTypeAnnotation}.
+     *
      * @return true iff this is a type annotation
      */
     public boolean isTypeAnnotation() {
@@ -210,6 +226,7 @@ public final class AnnotationDef extends AElement {
      * or @Target({ElementType.TYPE, ElementType.TYPE_USE}).
      *
      * @return true iff this is valid only in type annotation locations
+     * @see #isTypeAnnotation
      */
     public boolean isOnlyTypeAnnotation() {
         boolean result = Annotations.onlyTypeAnnotationTargets.contains(target());
@@ -307,39 +324,27 @@ public final class AnnotationDef extends AElement {
         return null;
     }
 
+    /** The printed representation is: "[meta-annos...] @name(args...)". */
     @Override
     public String toString() {
-        StringBuilder sb = new StringBuilder();
-        sb.append("[");
-        // Not: sb.append(((AElement) this).toString());
-        // because it causes an infinite loop.
-        boolean first;
-        first = true;
-        for (Annotation a : tlAnnotationsHere) {
-            if (!first) {
-                sb.append(" ");
-            } else {
-                first=false;
+
+        String metaAnnos;
+        if (tlAnnotationsHere.isEmpty()) {
+            metaAnnos = "";
+        } else {
+            StringJoiner metaAnnosJoiner = new StringJoiner(" ", "[", "]");
+            for (Annotation a : tlAnnotationsHere) {
+                metaAnnosJoiner.add(a.toString());
             }
-            sb.append(a);
+            metaAnnos = metaAnnosJoiner.toString() + " ";
         }
-        sb.append("] ");
-        sb.append("@");
-        sb.append(name);
-        sb.append("(");
-        first = true;
+
+        StringJoiner args = new StringJoiner(",", "(", ")");
         for (Map.Entry<String, AnnotationFieldType> entry : fieldTypes.entrySet()) {
-            if (!first) {
-                sb.append(",");
-            } else {
-                first = false;
-            }
-            sb.append(entry.getValue().toString());
-            sb.append(" ");
-            sb.append(entry.getKey());
+            args. add(entry.getValue().toString() + " "+entry.getKey());
         }
-        sb.append(")");
-        return sb.toString();
+
+        return metaAnnos.toString() + "@" + name + args.toString();
     }
 
     public static void printClasspath() {

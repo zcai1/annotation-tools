@@ -35,6 +35,7 @@ import scenelib.annotations.field.AnnotationFieldType;
 import scenelib.annotations.field.ArrayAFT;
 import scenelib.annotations.field.BasicAFT;
 import scenelib.annotations.field.ClassTokenAFT;
+import scenelib.annotations.field.EnumAFT;
 import scenelib.annotations.util.Strings;
 
 import com.sun.tools.javac.code.TypeAnnotationPosition.TypePathEntry;
@@ -58,7 +59,12 @@ public final class IndexFileWriter {
         pw.println();
     }
 
+    /** A DefCollector that prints all the annotation definitions. */
     private class OurDefCollector extends DefCollector {
+        /** Creates a new OurDefCollector.
+         * @throws DefException if the scene contains two irreconcilable definitions of the same
+         *   annotation type
+         */
         OurDefCollector() throws DefException {
             super(IndexFileWriter.this.scene);
         }
@@ -95,7 +101,7 @@ public final class IndexFileWriter {
     final PrintWriter pw;
 
     /**
-     * Print the annotation using the {@link pw} field, after formatting it.
+     * Print the annotation using the {@link #pw} field, after formatting it.
      * @param a the annotation to print
      */
     private void printAnnotation(Annotation a) {
@@ -111,8 +117,16 @@ public final class IndexFileWriter {
         }
     }
 
+    /**
+     * Print the annotations on the given AElement.
+     *
+     * @param e a program element
+     */
     private void printAnnotations(AElement e) {
         printAnnotations(e.tlAnnotationsHere);
+        if (e instanceof AMethod) {
+            printAnnotations(((AMethod) e).contracts);
+        }
     }
 
     private void printElement(String indentation,
@@ -501,6 +515,7 @@ public final class IndexFileWriter {
         return sj.toString();
     }
 
+    // TODO: Why isn't this just aft.format(o)??
     /**
      * Formats a literal argument of an annotation. Public to permit re-use
      * in stub-based whole-program inference.
@@ -532,6 +547,9 @@ public final class IndexFileWriter {
             return Strings.escape((String) o);
         } else if (aft instanceof BasicAFT && o instanceof Long) {
             return o.toString() + "L";
+        // This causes assertion failures.  I'm not sure why.
+        // else if (aft instanceof EnumAFT) {
+        //     return aft.format(o);
         } else {
             return o.toString();
         }

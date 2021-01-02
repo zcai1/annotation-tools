@@ -16,8 +16,11 @@ import scenelib.annotations.field.AnnotationFieldType;
  */
 public abstract class DefCollector {
 
-    // The set of all definitions in the Scene, which the visitor iterates
-    // over.
+    /**
+     * The set of all definitions in the Scene.
+     * {@link #collect(AScene)} populates it.
+     * {@link #visit()} iterates over it.
+     */
     private final Set<AnnotationDef> defs;
 
     /**
@@ -100,18 +103,19 @@ public abstract class DefCollector {
         // collect((AElement)d);
     }
 
+    /**
+     * Collect annotation definitions for an element.
+     *
+     * @param e the element to collect annotation definitions from
+     * @throws DefException if an annotation definition cannot be found
+     */
     private void collect(AElement e)
             throws DefException {
+        if (e == null) {
+            return;
+        }
         for (Annotation tla : e.tlAnnotationsHere) {
-            AnnotationDef tld = tla.def;
-            if (defs.contains(tld)) {
-                continue;
-            }
-
-            AnnotationDef d = tld;
-            collect(d);
-
-            addToDefs(d);
+            collect(tla);
         }
         if (e.type != null) {
             collect(e.type);
@@ -119,10 +123,32 @@ public abstract class DefCollector {
 
     }
 
-    private void collect(ATypeElement e)
+    /**
+     * Collect annotation definitions for an annotation.
+     *
+     * @param a the annotation to collect annotation definitions from
+     * @throws DefException if an annotation definition cannot be found
+     */
+    private void collect(Annotation a)
             throws DefException {
-        collect((AElement) e);
-        for (AElement it : e.innerTypes.values()) {
+        AnnotationDef d = a.def;
+        if (!defs.contains(d)) {
+            // Must call collect() before addToDefs().
+            collect(d);
+            addToDefs(d);
+        }
+    }
+
+    /**
+     * Collect annotation definitions for a type.
+     *
+     * @param t the type to collect annotation definitions from
+     * @throws DefException if an annotation definition cannot be found
+     */
+    private void collect(ATypeElement t)
+            throws DefException {
+        collect((AElement) t);
+        for (ATypeElement it : t.innerTypes.values()) {
             collect(it);
         }
     }
@@ -141,29 +167,59 @@ public abstract class DefCollector {
     private void collect(AField f)
             throws DefException {
         collect((ADeclaration) f);
+        collect(f.init);
     }
 
+    /**
+     * Collect annotation definitions for a method.
+     *
+     * @param m the method to collect annotation definitions from
+     * @throws DefException if an annotation definition cannot be found
+     */
     private void collect(AMethod m)
             throws DefException {
+        collect((ADeclaration) m);
         for (ATypeElement b : m.bounds.values()) {
             collect(b);
         }
-        collect((ADeclaration) m);
         collect(m.returnType);
         collect(m.receiver);
-        for (AElement p : m.parameters.values()) {
+        for (AField p : m.parameters.values()) {
             collect(p);
         }
-        for (AField l : m.body.locals.values()) {
+        for (ATypeElement e : m.throwsException.values()) {
+            collect(e);
+        }
+        for (AElement e : m.preconditions.values()) {
+            collect(e);
+        }
+        for (AElement e : m.postconditions.values()) {
+            collect(e);
+        }
+        for (Annotation a : m.contracts) {
+            collect(a);
+        }
+        collect(m.body);
+    }
+
+    /**
+     * Collect annotation definitions for a block.
+     *
+     * @param b the block to collect annotation definitions from
+     * @throws DefException if an annotation definition cannot be found
+     */
+    private void collect(ABlock b)
+            throws DefException {
+        for (AField l : b.locals.values()) {
             collect(l);
         }
-        for (ATypeElement tc : m.body.typecasts.values()) {
+        for (ATypeElement tc : b.typecasts.values()) {
             collect(tc);
         }
-        for (ATypeElement i : m.body.instanceofs.values()) {
+        for (ATypeElement i : b.instanceofs.values()) {
             collect(i);
         }
-        for (ATypeElement n : m.body.news.values()) {
+        for (ATypeElement n : b.news.values()) {
             collect(n);
         }
     }

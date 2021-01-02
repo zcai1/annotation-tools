@@ -1,5 +1,8 @@
 package scenelib.annotations.el;
 
+import java.util.Collections;
+import java.util.Objects;
+import java.util.ArrayList;
 import com.google.common.collect.ImmutableMap;
 import java.util.List;
 import java.util.Map;
@@ -9,6 +12,7 @@ import javax.lang.model.element.TypeParameterElement;
 import javax.lang.model.element.VariableElement;
 import javax.lang.model.type.TypeMirror;
 
+import scenelib.annotations.Annotation;
 import scenelib.annotations.el.AField;
 import scenelib.annotations.util.coll.VivifyingMap;
 
@@ -16,39 +20,65 @@ import scenelib.annotations.util.coll.VivifyingMap;
  * An annotated method; contains bounds, return, parameters, receiver, and throws.
  */
 public class AMethod extends ADeclaration {
-    /** The method's annotated type parameter bounds */
-    public final VivifyingMap<BoundLocation, ATypeElement> bounds =
-            ATypeElement.<BoundLocation>newVivifyingLHMap_ATE();
+    /**
+     * The method's simple name followed by its erased signature in JVML format.
+     * For example, {@code foo()V} or {@code bar(B[I[[Ljava/lang/String;)I}.
+     */
+    public final String methodSignature;
 
     /** The type parameters of this method. */
-    private List<? extends TypeParameterElement> typeParameters = null;
+    private /*@Nullable*/ List<? extends TypeParameterElement> typeParameters = null;
 
-    /** The method's annotated return type */
-    public final ATypeElement returnType; // initialized in constructor
+    /** The method's annotated type parameter bounds. */
+    public final VivifyingMap<BoundLocation, ATypeElement> bounds =
+            ATypeElement.<BoundLocation>newVivifyingLHMap_ATE();
 
     /** The return type of the method, or null if the method's return type is unknown or void. */
     private /*@Nullable*/ TypeMirror returnTypeMirror;
 
-    /** The method's annotated receiver parameter type */
+    /** The method's annotated return type.  Non-null even if returnTypeMirror is null. */
+    public final ATypeElement returnType; // initialized in constructor
+
+    /** The method's annotated receiver parameter type. */
     public final AField receiver; // initialized in constructor
 
-    /** The method's annotated parameters; map key is parameter index */
+    /** The method's annotated parameters; map key is parameter index, starting at 0. */
     public final VivifyingMap<Integer, AField> parameters =
             AField.<Integer>newVivifyingLHMap_AF();
 
+    /** Exceptions that are thrown. */
     public final VivifyingMap<TypeIndexLocation, ATypeElement> throwsException =
         ATypeElement.<TypeIndexLocation>newVivifyingLHMap_ATE();
 
-    /** The body of the method. */
-    public ABlock body;
+    /** Types of expressions at entry to the method. */
+    // TODO: Later, when the code handles preconditions beyond fields of `this`,
+    // the map key will probably became the string representation of the expression.
+    // TODO: The map value type should probably be ATypeElement instead.
+    public final VivifyingMap<VariableElement, AField> preconditions =
+            AField.<VariableElement>newVivifyingLHMap_AF();
+
+    /** Types of expressions at exit from the method. */
+    // TODO: Later, when the code handles preconditions beyond fields of `this`,
+    // the map key will probably became the string representation of the expression.
+    // TODO: The map value type should probably be ATypeElement instead.
+    public final VivifyingMap<VariableElement, AField> postconditions =
+            AField.<VariableElement>newVivifyingLHMap_AF();
 
     /**
-     * The method's simple name
-     * followed by its erased signature in JVML format.
-     * For example, {@code foo()V} or
-     * {@code bar(B[I[[Ljava/lang/String;)I}.
+     * Clients set this before printing the AMethod.
+     *
+     * These annotations are not stored in tlAnnotationsHere because
+     * whole-program inference assumes that inferred annotations only
+     * become stronger, but these annotations might disappear as other
+     * annotations become stronger.
+     *
+     * These annotations are not part of the abstract state of this
+     * AMethod (but are derived from it).
      */
-    public final String methodSignature;
+    public List<Annotation> contracts = Collections.emptyList();
+
+    /** The body of the method. */
+    public ABlock body;
 
     /**
      * Create an AMethod.
@@ -59,34 +89,39 @@ public class AMethod extends ADeclaration {
     AMethod(String methodSignature) {
       super("method: " + methodSignature);
       this.methodSignature = methodSignature;
+      this.returnType = new ATypeElement("return type of " + methodSignature);
+      this.receiver = new AField("receiver parameter type of " + methodSignature);
       this.body = new ABlock(methodSignature);
-      returnType = new ATypeElement("return type of " + methodSignature);
-      receiver = new AField("receiver parameter type of " + methodSignature);
     }
 
     /**
-     * Create a copy on an AMethod.
+     * Create a copy of an AMethod.
      *
-     * @param method the AMethod to copy
+     * @param other the AMethod to copy
      */
-    AMethod(AMethod method) {
-      super("method: " + method.methodSignature, method);
-      methodSignature = method.methodSignature;
-      body = method.body.clone();
-      returnType = method.returnType.clone();
-      receiver = method.receiver.clone();
-      copyMapContents(method.bounds, bounds);
-      copyMapContents(method.parameters, parameters);
-      copyMapContents(method.throwsException, throwsException);
-      copyMapContents(method.bounds, bounds);
+    AMethod(AMethod other) {
+      super("method: " + other.methodSignature, other);
+      this.methodSignature = other.methodSignature;
+      this.typeParameters = other.typeParameters == null ? null : new ArrayList<>(other.typeParameters);
+      copyMapContents(other.bounds, bounds);
+      this.returnTypeMirror = other.returnTypeMirror == null ? null : other.returnTypeMirror;
+      this.returnType = other.returnType.clone();
+      this.receiver = other.receiver.clone();
+      copyMapContents(other.parameters, parameters);
+      copyMapContents(other.throwsException, throwsException);
+      copyMapContents(other.preconditions, preconditions);
+      copyMapContents(other.postconditions, postconditions);
+      this.body = other.body.clone();
     }
 
     /**
-     * Sets fields from information in the methodElement.
+     * Sets return type, type parameters, and formal parameters in this AMethod,
+     * from information in the given method element.
      *
-     * @param methodElt the element whose infromation to propagate into this
+     * @param methodElt the element whose information to propagate into this
      */
     public void setFieldsFromMethodElement(ExecutableElement methodElt) {
+        // TODO: Why doesn't this method set bounds, throwsException, and maybe other fields of this?
         setReturnTypeMirror(methodElt.getReturnType());
         setTypeParameters(methodElt.getTypeParameters());
         vivifyAndAddTypeMirrorToParameters(methodElt);
@@ -160,6 +195,40 @@ public class AMethod extends ADeclaration {
     }
 
     /**
+     * Obtain information about an expression at method entry.
+     * It can be further operated on to e.g. add a type annotation.
+     *
+     * @param varElt the field
+     * @param type the type of the expression
+     * @return an AField representing the expression
+     */
+    public AField vivifyAndAddTypeMirrorToPrecondition(VariableElement varElt, TypeMirror type) {
+        AField result = preconditions.getVivify(varElt);
+        result.setName(varElt.toString());
+        if (result.getTypeMirror() == null) {
+            result.setTypeMirror(type);
+        }
+        return result;
+    }
+
+    /**
+     * Obtain information about an expression at method exit.
+     * It can be further operated on to e.g. add a type annotation.
+     *
+     * @param varElt the field
+     * @param type the type of the expression
+     * @return an AField representing the expression
+     */
+    public AField vivifyAndAddTypeMirrorToPostcondition(VariableElement varElt, TypeMirror type) {
+        AField result = postconditions.getVivify(varElt);
+        result.setName(varElt.toString());
+        if (result.getTypeMirror() == null) {
+            result.setTypeMirror(type);
+        }
+        return result;
+    }
+
+    /**
      * Get the return type.
      *
      * @return the return type, or null if the return type is unknown or void
@@ -169,7 +238,7 @@ public class AMethod extends ADeclaration {
     }
 
     /**
-     * Set the return type.
+     * Set the return type.  Does nothing if the argument is null.
      *
      * @param returnTypeMirror the return type
      */
@@ -193,6 +262,24 @@ public class AMethod extends ADeclaration {
         return ImmutableMap.copyOf(parameters);
     }
 
+    /**
+     * Get the preconditions: annotations that apply to fields at method entry.
+     *
+     * @return an immutable copy of the vivified preconditions
+     */
+    public Map<VariableElement, AField> getPreconditions() {
+        return ImmutableMap.copyOf(preconditions);
+    }
+
+    /**
+     * Get the postconditions: annotations that apply to fields at method exit.
+     *
+     * @return an immutable copy of the vivified postconditions
+     */
+    public Map<VariableElement, AField> getPostconditions() {
+        return ImmutableMap.copyOf(postconditions);
+    }
+
     @Override
     public AMethod clone() {
       return new AMethod(this);
@@ -209,29 +296,48 @@ public class AMethod extends ADeclaration {
         o.parameters.prune();
 
         return super.equals(o)
-            && returnType.equalsTypeElement(o.returnType)
+            && methodSignature.equals(o.methodSignature)
+            // unneeded: && typeParameters.equals(o.typeParameters)
             && bounds.equals(o.bounds)
+            // unneeded: && returnTypeMirror.equals
+            && returnType.equalsTypeElement(o.returnType)
             && receiver.equals(o.receiver)
             && parameters.equals(o.parameters)
-            && body.equals(o.body)
-            && methodSignature.equals(o.methodSignature)
-            && throwsException.equals(o.throwsException);
+            && throwsException.equals(o.throwsException)
+            && preconditions.equals(o.preconditions)
+            && postconditions.equals(o.postconditions)
+            && body.equals(o.body);
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode()
-                + bounds.hashCode() + receiver.hashCode()
-                + parameters.hashCode() + throwsException.hashCode()
-                + body.hashCode() + methodSignature.hashCode();
+        parameters.prune();
+        return Objects.hash(
+            super.hashCode(),
+            methodSignature,
+            // unneeded: typeParameters,
+            bounds,
+            // unneeded: returnTypeMirror,
+            returnType,
+            receiver,
+            parameters,
+            throwsException,
+            preconditions,
+            postconditions,
+            body);
     }
 
     @Override
     public boolean isEmpty() {
-        return super.isEmpty() && bounds.isEmpty()
-            && returnType.isEmpty()
-            && receiver.isEmpty() && parameters.isEmpty()
-            && throwsException.isEmpty() && body.isEmpty();
+        return super.isEmpty()
+                && bounds.isEmpty()
+                && returnType.isEmpty()
+                && receiver.isEmpty()
+                && parameters.isEmpty()
+                && throwsException.isEmpty()
+                && preconditions.isEmpty()
+                && postconditions.isEmpty()
+                && body.isEmpty();
     }
 
     @Override
@@ -242,6 +348,8 @@ public class AMethod extends ADeclaration {
         receiver.prune();
         parameters.prune();
         throwsException.prune();
+        preconditions.prune();
+        postconditions.prune();
         body.prune();
     }
 

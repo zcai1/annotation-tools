@@ -55,6 +55,7 @@ import scenelib.annotations.field.EnumAFT;
 import scenelib.annotations.field.ScalarAFT;
 import scenelib.annotations.util.coll.VivifyingMap;
 
+import org.plumelib.reflection.Signatures;
 import org.plumelib.util.ArraysPlume;
 import org.plumelib.util.FileIOException;
 import org.plumelib.util.Pair;
@@ -65,7 +66,11 @@ import scenelib.type.BoundedType.BoundKind;
 import scenelib.type.DeclaredType;
 import scenelib.type.Type;
 
+import org.checkerframework.checker.signature.qual.BinaryName;
 import org.checkerframework.checker.signature.qual.ClassGetName;
+import org.checkerframework.checker.signature.qual.DotSeparatedIdentifiers;
+import org.checkerframework.checker.signature.qual.Identifier;
+import org.checkerframework.framework.qual.EnsuresQualifierIf;
 
 /**
  * IndexFileParser provides static methods
@@ -194,6 +199,12 @@ public final class IndexFileParser {
         Collections.addAll(knownKeywords, knownKeywords_array);
     }
 
+    /** Returns true if the given string is an identifier.
+        @param x a string
+        @return true if the given string is an identifier
+    */
+    @SuppressWarnings("signature:contracts.conditional.postcondition.not.satisfied") // string parsing
+    @EnsuresQualifierIf(result = true, expression = "#1", qualifier = Identifier.class)
     private boolean isValidIdentifier(String x) {
         if (x.length() == 0 || !Character.isJavaIdentifierStart(x.charAt(0))
                 || knownKeywords.contains(x))
@@ -206,20 +217,25 @@ public final class IndexFileParser {
         return true;
     }
 
-    private String checkIdentifier() {
+    /** Returns the next token, if it is an identifier.  Does not advance parsing past the identifier.
+     * @return the next token, so long as it is an identifier; otherwise, returns null */
+    private @Identifier String checkIdentifier() {
         if (st.sval == null) {
             return null;
         } else {
             String val = st.sval;
             if (st.ttype == TT_WORD && isValidIdentifier(val)) {
-                return st.sval;
+                return val;
             } else {
                 return null;
             }
         }
     }
 
-    private String matchIdentifier() throws IOException {
+    /** Returns the next token, if it is an identifier.  Advances parsing past the identifier.
+     * @return the next token, so long as it is an identifier; otherwise, returns null
+     * @throws IOException if there is trouble reading the index file */
+    private @Identifier String matchIdentifier() throws IOException {
         String x = checkIdentifier();
         if (x != null) {
             st.nextToken();
@@ -229,7 +245,12 @@ public final class IndexFileParser {
         }
     }
 
-    private String expectIdentifier() throws IOException, ParseException {
+    /** Returns the next token, if it is an identifier.  Advances parsing past the identifier.
+     * @return the next token, so long as it is an identifier; otherwise, throws ParseException
+     * @throws IOException if there is trouble reading the index file
+     * @throws ParseException if the file contents are not valid
+     */
+    private @Identifier String expectIdentifier() throws IOException, ParseException {
         String id = matchIdentifier();
         if (id == null) { throw new ParseException("Expected an identifier"); }
         return id;
@@ -516,12 +537,16 @@ public final class IndexFileParser {
         String name = expectQualifiedName();
         AnnotationDef d = defs.get(name);
         if (d == null) {
-            // System.err.println("No definition for annotation type " + name);
-            // System.err.printf("  defs contains %d entries%n", defs.size());
-            // for (Map.Entry<String,AnnotationDef> entry : defs.entrySet()) {
-            //    System.err.printf("    defs entry: %s => %s%n", entry.getKey(), entry.getValue());
-            // }
-            throw new ParseException("No definition for annotation type " + name);
+            ParseException e = new ParseException("No definition for annotation type " + name);
+            if (false) { // for debugging
+                System.err.println("No definition for annotation type " + name);
+                System.err.printf("  defs contains %d entries%n", defs.size());
+                for (Map.Entry<String,AnnotationDef> entry : defs.entrySet()) {
+                    System.err.printf("    defs entry: %s => %s%n", entry.getKey(), entry.getValue());
+                }
+                e.printStackTrace(System.err);
+            }
+            throw e;
         }
         return d;
     }
@@ -561,9 +586,15 @@ public final class IndexFileParser {
                 Annotation a = parseAnnotationBody(d, ab);
                 for (Annotation other : e.tlAnnotationsHere) {
                     if (a.def.name.equals(other.def.name)) {
-                        System.err.println(
-                                "WARNING: duplicate annotation of type "
-                                        + a.def().name);
+                        // Don't output this warning, because the annotation might be repeatable.
+                        // TODO: IndexFileWriter should output the @Repeatable(EnsuresQualifier.List.class)
+                        // meta-annotation if present (and maybe other meta-annotations too), and
+                        // then this code can output the warning (or even crash) if it is not present.
+                        if (false) {
+                        System.err.printf(
+                            "WARNING: duplicate annotation of type %s on %s%n",
+                            a.def().name, e.description);
+                        }
                         continue;
                     }
                 }
@@ -653,7 +684,8 @@ public final class IndexFileParser {
 
         expectChar('@');
         String basename = expectIdentifier();
-        String fullName = curPkgPrefix + basename;
+        @SuppressWarnings("signature")  // string concatenation
+        @BinaryName String fullName = curPkgPrefix + basename;
 
         AnnotationDef ad = new AnnotationDef(fullName, source);
         expectChar(':');
@@ -1375,8 +1407,9 @@ public final class IndexFileParser {
      * Parses and constructs a new AST entry, where none of the child selections require
      * arguments. For example, the call:
      *
-     * <pre>
-     * {@code newASTEntry(Kind.WHILE_LOOP, new String[] {"condition", "statement"});</pre>
+     * <pre>{@code
+     * newASTEntry(Kind.WHILE_LOOP, new String[] {"condition", "statement"});
+     * }</pre>
      *
      * constructs a while loop AST entry, where the valid child selectors are "condition" or
      * "statement".
@@ -1393,9 +1426,9 @@ public final class IndexFileParser {
     /**
      * Parses and constructs a new AST entry. For example, the call:
      *
-     * <pre>
-     * {@code newASTEntry(Kind.CASE, new String[] {"expression", "statement"}, new String[] {"statement"});
-     * </pre>
+     * <pre>{@code
+     * newASTEntry(Kind.CASE, new String[] {"expression", "statement"}, new String[] {"statement"});
+     * }</pre>
      *
      * constructs a case AST entry, where the valid child selectors are
      * "expression" or "statement" and the "statement" child selector requires
