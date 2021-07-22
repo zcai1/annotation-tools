@@ -138,9 +138,9 @@ public class GenericArrayLocationCriterion implements Criterion {
     }
     if (child != null && child.getKind() == Tree.Kind.MEMBER_SELECT) {
       JCExpression exp = ((JCFieldAccess) child).getExpression();
-      if (exp.type != null && exp.type.getKind() == TypeKind.PACKAGE
+      if ((exp.type != null && exp.type.getKind() == TypeKind.PACKAGE)
           || typePath == null
-          || (typePath.getStep(typePath.getLength() - 1)) != TypePath.INNER_TYPE) {
+          || typePath.getStep(typePath.getLength() - 1) != TypePath.INNER_TYPE) {
         return false;
       }
     }
@@ -504,6 +504,11 @@ public class GenericArrayLocationCriterion implements Criterion {
     }
 
     return !isGenericOrArray(parent);
+  }
+
+  @Override
+  public boolean isOnlyTypeAnnotationCriterion() {
+    return true;
   }
 
   /**

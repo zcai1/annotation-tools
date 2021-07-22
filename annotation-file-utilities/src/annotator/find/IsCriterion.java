@@ -1,6 +1,6 @@
 package annotator.find;
 
-import annotator.scanner.CommonScanner;
+import annotator.scanner.TreePathUtil;
 import com.sun.source.tree.*;
 import com.sun.source.util.TreePath;
 
@@ -35,7 +35,7 @@ final class IsCriterion implements Criterion {
       return false;
     }
     Tree tree = path.getLeaf();
-    if (CommonScanner.hasClassKind(tree)) {
+    if (TreePathUtil.hasClassKind(tree)) {
       return InClassCriterion.isSatisfiedBy(path, name, /*exactMatch=*/ true);
     }
     if (tree.getKind() != kind) {
@@ -53,6 +53,11 @@ final class IsCriterion implements Criterion {
       default:
         throw new Error("unknown tree kind " + kind);
     }
+  }
+
+  @Override
+  public boolean isOnlyTypeAnnotationCriterion() {
+    return false;
   }
 
   @Override

@@ -397,15 +397,20 @@ public class IsSigMethodCriterion implements Criterion {
       return false;
     }
 
-    if ((mt.getReturnType() != null) // must be a constructor
-        && (returnType != null)
-        && (!matchTypeParam(returnType, mt.getReturnType(), typeToClassMap, context))) {
+    if (mt.getReturnType() != null // must be a constructor
+        && returnType != null
+        && !matchTypeParam(returnType, mt.getReturnType(), typeToClassMap, context)) {
       Criteria.dbug.debug("IsSigMethodCriterion => false: Return types don't match%n");
       return false;
     }
 
     Criteria.dbug.debug("IsSigMethodCriterion.isSatisfiedBy => true%n");
     return true;
+  }
+
+  @Override
+  public boolean isOnlyTypeAnnotationCriterion() {
+    return false;
   }
 
   /* This is a copy of the method from the Checker Framework

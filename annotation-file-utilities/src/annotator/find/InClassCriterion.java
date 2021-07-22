@@ -11,6 +11,7 @@ import com.sun.source.util.TreePath;
 import java.util.*;
 import java.util.regex.*;
 import javax.lang.model.element.Name;
+import org.checkerframework.checker.signature.qual.ClassGetName;
 
 // If there are dollar signs in a name, then there are two
 // possibilities regarding how the dollar sign got there.
@@ -26,13 +27,21 @@ import javax.lang.model.element.Name;
 /** Represents the criterion that a program element is in a class with a particular name. */
 public final class InClassCriterion implements Criterion {
 
+  /** If true, print diagnostic information. */
   static boolean debug = false;
 
-  public final String className;
+  /** The class name. */
+  public final @ClassGetName String className;
+  /** If true, require an exact match. */
   private final boolean exactMatch;
 
-  /** The argument is a fully-qualified class name. */
-  public InClassCriterion(String className, boolean exactMatch) {
+  /**
+   * Creates a new InClassCriterion.
+   *
+   * @param className the class name
+   * @param exactMatch if true, require an exact match
+   */
+  public InClassCriterion(@ClassGetName String className, boolean exactMatch) {
     this.className = className;
     this.exactMatch = exactMatch;
   }
@@ -149,7 +158,7 @@ public final class InClassCriterion implements Criterion {
               return true;
             }
           } else if (cname.startsWith(treeClassName + "$")
-              || (cname.startsWith(treeClassName + "."))) {
+              || cname.startsWith(treeClassName + ".")) {
             cname = cname.substring(treeClassName.length() + 1);
           } else if (!treeClassName.isEmpty()) {
             // treeClassName is empty for anonymous inner class
@@ -252,6 +261,11 @@ public final class InClassCriterion implements Criterion {
         "%s InClassCriterion.isSatisfiedBy:%n  cname=%s%n  tree=%s%n",
         cname.equals(""), cname, path.getLeaf());
     return cname.equals("");
+  }
+
+  @Override
+  public boolean isOnlyTypeAnnotationCriterion() {
+    return false;
   }
 
   @Override

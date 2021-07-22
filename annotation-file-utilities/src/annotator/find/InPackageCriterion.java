@@ -45,13 +45,18 @@ final class InPackageCriterion implements Criterion {
           return name == null || name.equals("");
         } else {
           String packageName = pn.toString();
-          return name != null && (name.equals(packageName));
+          return name != null && name.equals(packageName);
         }
       }
       path = path.getParentPath();
     } while (path != null && path.getLeaf() != null);
 
     Criteria.dbug.debug("InPackageCriterion.isSatisfiedBy => false");
+    return false;
+  }
+
+  @Override
+  public boolean isOnlyTypeAnnotationCriterion() {
     return false;
   }
 

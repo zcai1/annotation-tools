@@ -1,12 +1,14 @@
 package annotator.find;
 
 import com.sun.source.tree.Tree;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;
 import org.objectweb.asm.TypePath;
 import org.plumelib.util.Pair;
+import org.plumelib.util.StringsPlume;
 import scenelib.annotations.el.TypePathEntry;
 import scenelib.annotations.io.ASTPath;
 import scenelib.type.ArrayType;
@@ -215,7 +217,35 @@ public abstract class Insertion {
 
   @Override
   public String toString() {
+    return getClass().getSimpleName() + " " + toStringWithoutClass();
+  }
+
+  /**
+   * Format this without reporting its class name.
+   *
+   * @return a representation of this, without its class name
+   */
+  public String toStringWithoutClass() {
     return String.format("(nl=%b) @ %s", separateLine, criteria);
+  }
+
+  /**
+   * Format a list of insertions, with one insertion on each line.
+   *
+   * @param list a collection of insertions
+   * @return a multi-line string representation of the list
+   */
+  public static String collectionToString(Collection<? extends Insertion> list) {
+    if (list.isEmpty()) {
+      return "[]";
+    } else {
+      return "["
+          + System.lineSeparator()
+          + "  "
+          + StringsPlume.join(System.lineSeparator() + "  ", list)
+          + System.lineSeparator()
+          + "]";
+    }
   }
 
   /**

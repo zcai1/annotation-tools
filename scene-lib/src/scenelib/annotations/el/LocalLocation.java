@@ -72,6 +72,7 @@ public final class LocalLocation {
    * @param scopeLength the bytecode length of the variable's lifetime
    * @param index the offset of the variable in the stack frame
    */
+  @SuppressWarnings({"NarrowingCompoundAssignment", "CatchAndPrintStackTrace"}) // TODO
   public LocalLocation(int scopeStart, int scopeLength, int index) {
     Label startLabel = new Label();
     Label endLabel = new Label();
@@ -96,7 +97,7 @@ public final class LocalLocation {
       flagsField.set(endLabel, flags);
       bytecodeOffsetField.set(endLabel, scopeStart + scopeLength);
     } catch (Exception e) {
-      e.printStackTrace();
+      throw new Error(e);
     }
 
     this.start = new Label[] {startLabel};

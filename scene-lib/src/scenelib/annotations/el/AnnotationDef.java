@@ -87,8 +87,7 @@ public final class AnnotationDef extends AElement {
    */
   public static AnnotationDef fromClass(
       Class<? extends java.lang.annotation.Annotation> annoType, Map<String, AnnotationDef> adefs) {
-    @SuppressWarnings(
-        "signature:assignment.type.incompatible") // not an array, so ClassGetName => BinaryName
+    @SuppressWarnings("signature:assignment") // not an array, so ClassGetName => BinaryName
     @BinaryName String name = annoType.getName();
     assert name != null;
 
@@ -278,11 +277,13 @@ public final class AnnotationDef extends AElement {
     boolean sameMetaAnnotations = equalsElement(o);
     boolean sameFieldTypes = fieldTypes.equals(o.fieldTypes);
     // Can be useful for debugging
-    if (false && sameName && (!(sameMetaAnnotations && sameFieldTypes))) {
-      String message =
-          String.format(
-              "Warning: incompatible definitions of annotation %s%n  %s%n  %s%n", name, this, o);
-      new Exception(message).printStackTrace(System.out);
+    if (false) {
+      if (sameName && !(sameMetaAnnotations && sameFieldTypes)) {
+        String message =
+            String.format(
+                "Warning: incompatible definitions of annotation %s%n  %s%n  %s%n", name, this, o);
+        new Exception(message).printStackTrace(System.out);
+      }
     }
     return sameName && sameMetaAnnotations && sameFieldTypes;
   }
@@ -361,6 +362,17 @@ public final class AnnotationDef extends AElement {
     return metaAnnos.toString() + "@" + name + args.toString();
   }
 
+  /**
+   * Returns a string representation of this object, useful for debugging.
+   *
+   * @return a string representation of this object, useful for debugging
+   */
+  public String toStringDebug() {
+    return toString()
+        + String.format("; source=%s, tlAnnotationsHere=%s", source, tlAnnotationsHere);
+  }
+
+  /** Prints the classpath. */
   public static void printClasspath() {
     System.out.println("Classpath:");
     StringTokenizer tokenizer =

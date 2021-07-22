@@ -7,7 +7,7 @@ import java.util.List;
 import scenelib.annotations.el.RelativeLocation;
 import scenelib.annotations.io.ASTPath;
 
-/** @author dan */
+@SuppressWarnings("MissingSummary") // TODO
 public class IntersectionTypeLocationCriterion implements Criterion {
   private final int typeIndex;
 
@@ -43,6 +43,11 @@ public class IntersectionTypeLocationCriterion implements Criterion {
       return isSatisfiedBy(path.getParentPath());
     }
     return false;
+  }
+
+  @Override
+  public boolean isOnlyTypeAnnotationCriterion() {
+    return true;
   }
 
   @Override

@@ -1,5 +1,6 @@
 package scenelib.annotations.io;
 
+import annotator.find.CaseUtils;
 import com.google.common.collect.BiMap;
 import com.google.common.collect.HashBiMap;
 import com.sun.source.tree.AnnotatedTypeTree;
@@ -227,7 +228,7 @@ public class ASTIndex extends WrapperMap<Tree, ASTRecord> {
           @Override
           public Void visitCase(CaseTree node, ASTRecord rec) {
             Kind kind = node.getKind();
-            save(node.getExpression(), rec, kind, ASTPath.EXPRESSION);
+            saveAll(CaseUtils.caseTreeGetExpressions(node), rec, kind, ASTPath.EXPRESSION);
             saveAll(node.getStatements(), rec, kind, ASTPath.STATEMENT);
             return defaultAction(node, rec);
           }
@@ -626,13 +627,15 @@ public class ASTIndex extends WrapperMap<Tree, ASTRecord> {
     }
   }
 
+  @SuppressWarnings("EmptyCatch") // TODO
   public static Integer getParameterIndex(
       CompilationUnitTree cut, String className, String methodName, String varName) {
     if (cut != null && className != null && methodName != null && varName != null) {
-      // if it's already a number, return it
+      // If `varName` is already a number, return it
       try {
         return Integer.valueOf(varName);
       } catch (NumberFormatException ex) {
+        // Fall through in order to check name.
       }
       // otherwise, look through parameter list for string
       try {
@@ -646,6 +649,8 @@ public class ASTIndex extends WrapperMap<Tree, ASTRecord> {
           ++i;
         }
       } catch (NullPointerException ex) {
+        // Not found.
+        // TODO: It would be cleaner to check for null above than to catch the exception here.
       }
     }
     // not found

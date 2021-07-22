@@ -75,7 +75,7 @@ public class BoundLocationCriterion implements Criterion {
         if (!bounds.isEmpty() && isInterface((JCExpression) bounds.get(0))) {
           --ix;
         }
-        if (ix < 0 || ix < bounds.size() && bounds.get(ix) == leaf) {
+        if (ix < 0 || (ix < bounds.size() && bounds.get(ix) == leaf)) {
           returnValue = parentCriterion.isSatisfiedBy(parentPath);
         }
       } else if (boundIndex == 0 && leaf instanceof TypeParameterTree) {
@@ -118,6 +118,17 @@ public class BoundLocationCriterion implements Criterion {
     }
   }
 
+  @Override
+  public boolean isOnlyTypeAnnotationCriterion() {
+    return true;
+  }
+
+  /**
+   * Returns true if the given bound is an interface.
+   *
+   * @param bound a type bound
+   * @return true if the given bound is an interface
+   */
   private boolean isInterface(JCExpression bound) {
     Type type = bound.type;
     return type != null && type.tsym != null && type.tsym.isInterface();

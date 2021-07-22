@@ -12,15 +12,17 @@ import annotator.find.ReceiverInsertion;
 import annotator.find.TreeFinder;
 import annotator.find.TypedInsertion;
 import annotator.scanner.LocalVariableScanner;
+import annotator.scanner.TreePathUtil;
 import annotator.specification.IndexFileSpecification;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.SetMultimap;
+import com.sun.source.tree.ClassTree;
 import com.sun.source.tree.CompilationUnitTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
-import com.sun.tools.javac.main.CommandLine;
+import com.sun.source.util.TreePathScanner;
 import com.sun.tools.javac.tree.JCTree;
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -70,8 +72,8 @@ import scenelib.annotations.io.ASTRecord;
 import scenelib.annotations.io.DebugWriter;
 import scenelib.annotations.io.IndexFileParser;
 import scenelib.annotations.io.IndexFileWriter;
+import scenelib.annotations.util.CommandLineUtils;
 import scenelib.annotations.util.coll.VivifyingMap;
-import scenelib.type.Type;
 
 /**
  * This is the main class for the annotator, which inserts annotations in Java source code. You can
@@ -94,7 +96,7 @@ import scenelib.type.Type;
  *   <li id="optiongroup:General-options">General options
  *       <ul>
  *         <li id="option:outdir"><b>-d</b> <b>--outdir=</b><i>directory</i>. Directory in which
- *             output files are written. [default annotated/]
+ *             output files are written. [default: annotated/]
  *         <li id="option:in-place"><b>-i</b> <b>--in-place=</b><i>boolean</i>. If true, overwrite
  *             original source files (making a backup first). Furthermore, if the backup files
  *             already exist, they are used instead of the .java files. This behavior permits a user
@@ -105,34 +107,39 @@ import scenelib.type.Type;
  *             annotations will appear in the codebase at the end.
  *             <p>To preserve changes when using the --in-place option, first remove the backup
  *             files. Or, use the {@code -d .} option, which makes (and reads) no backup, instead of
- *             --in-place. [default false]
+ *             --in-place. [default: false]
  *         <li id="option:abbreviate"><b>-a</b> <b>--abbreviate=</b><i>boolean</i>. If true, insert
- *             {@code import} statements as necessary. [default true]
+ *             {@code import} statements as necessary. [default: true]
  *         <li id="option:comments"><b>-c</b> <b>--comments=</b><i>boolean</i>. Insert annotations
- *             in comments [default false]
+ *             in comments [default: false]
  *         <li id="option:omit-annotation"><b>-o</b> <b>--omit-annotation=</b><i>string</i>. Omit
  *             given annotation
  *         <li id="option:nowarn"><b>--nowarn=</b><i>boolean</i>. Suppress warnings about disallowed
- *             insertions [default false]
+ *             insertions [default: false]
  *         <li id="option:convert-jaifs"><b>--convert-jaifs=</b><i>boolean</i>. Convert JAIFs to AST
- *             Path format [default false]
+ *             Path format, but do no insertion into source [default: false]
  *         <li id="option:help"><b>-h</b> <b>--help=</b><i>boolean</i>. Print usage information and
- *             exit [default false]
+ *             exit [default: false]
  *       </ul>
  *   <li id="optiongroup:Debugging-options">Debugging options
  *       <ul>
  *         <li id="option:verbose"><b>-v</b> <b>--verbose=</b><i>boolean</i>. Verbose (print
- *             progress information) [default false]
+ *             progress information) [default: false]
  *         <li id="option:debug"><b>--debug=</b><i>boolean</i>. Debug (print debug information)
- *             [default false]
+ *             [default: false]
  *         <li id="option:print-error-stack"><b>--print-error-stack=</b><i>boolean</i>. Print error
- *             stack [default false]
+ *             stack [default: false]
  *       </ul>
  * </ul>
  *
  * <!-- end options doc -->
  */
 public class Main {
+
+  /** The system-specific file separator. */
+  private static String fileSep = System.getProperty("file.separator");
+
+  // Options
 
   /** Directory in which output files are written. */
   @OptionGroup("General options")
@@ -170,7 +177,7 @@ public class Main {
 
   // Instead of doing insertions, create new JAIFs using AST paths
   //  extracted from existing JAIFs and source files they match
-  @Option("Convert JAIFs to AST Path format")
+  @Option("Convert JAIFs to AST Path format, but do no insertion into source")
   public static boolean convert_jaifs = false;
 
   @Option("-h Print usage information and exit")
@@ -180,7 +187,7 @@ public class Main {
 
   @OptionGroup("Debugging options")
   @Option("-v Verbose (print progress information)")
-  public static boolean verbose;
+  public static boolean verbose = false;
 
   @Option("Debug (print debug information)")
   public static boolean debug = false;
@@ -314,7 +321,7 @@ public class Main {
   }
 
   private static ATypeElement findInnerTypeElement(
-      Tree t, ASTRecord rec, ADeclaration decl, Type type, Insertion ins) {
+      ASTRecord rec, ADeclaration decl, Insertion ins) {
     ASTPath astPath = rec.astPath;
     GenericArrayLocationCriterion galc = ins.getCriteria().getGenericArrayLocation();
     assert astPath != null && galc != null;
@@ -396,7 +403,6 @@ public class Main {
             TreePath path = ASTIndex.getTreePath(tree, rec);
             JCTree.JCVariableDecl varTree = null;
             JCTree.JCMethodDecl methTree = null;
-            JCTree.JCClassDecl classTree = null;
             loop:
             while (path != null) {
               Tree leaf = path.getLeaf();
@@ -430,7 +436,7 @@ public class Main {
                 break;
               }
               if (ASTPath.isClassEquiv(kind)) {
-                classTree = (JCTree.JCClassDecl) leaf;
+                // classTree = (JCTree.JCClassDecl) leaf;
                 // ???
                 break;
               }
@@ -462,7 +468,7 @@ public class Main {
           for (Insertion inner : ti.getInnerTypeInsertions()) {
             Tree t = ASTIndex.getNode(tree, rec);
             if (t != null) {
-              ATypeElement elem = findInnerTypeElement(t, rec, decl, ti.getType(), inner);
+              ATypeElement elem = findInnerTypeElement(rec, decl, inner);
               for (Annotation a : insertionSources.get(inner)) {
                 elem.tlAnnotationsHere.add(a);
               }
@@ -489,6 +495,10 @@ public class Main {
    *
    * @param args .jaif files and/or .java files and/or @arg-files, in any order
    */
+  @SuppressWarnings({
+    "ReferenceEquality", // interned operand
+    "EmptyCatch", // TODO
+  })
   public static void main(String[] args) throws IOException {
 
     if (verbose) {
@@ -506,25 +516,20 @@ public class Main {
     String[] cl_args;
     String[] file_args;
     try {
-      cl_args = CommandLine.parse(args);
+      cl_args = CommandLineUtils.parseCommandLine(args);
       file_args = options.parse(true, cl_args);
-    } catch (IOException ex) {
+    } catch (Exception ex) {
       System.err.println(ex);
       System.err.println("(For non-argfile beginning with \"@\", use \"@@\" for initial \"@\".");
       System.err.println("Alternative for filenames: indicate directory, e.g. as './@file'.");
       System.err.println("Alternative for flags: use '=', as in '-o=@Deprecated'.)");
-      cl_args = null; // convince compiler that variables are initialized
-      file_args = null; // Eclipse compiler issue workaround
       System.exit(1);
+      throw new Error("Unreachable");
     }
 
-    DebugWriter dbug = new DebugWriter();
-    DebugWriter verb = new DebugWriter();
-    DebugWriter both = dbug.or(verb);
-    dbug.setEnabled(debug);
-    verb.setEnabled(verbose);
+    DebugWriter dbug = new DebugWriter(debug);
+    DebugWriter verb = new DebugWriter(verbose);
     TreeFinder.warn.setEnabled(!nowarn);
-    TreeFinder.stak.setEnabled(print_error_stack);
     TreeFinder.dbug.setEnabled(debug);
     Criteria.dbug.setEnabled(debug);
 
@@ -549,10 +554,27 @@ public class Main {
       System.exit(1);
     }
 
-    // The insertions specified by the annotation files.
-    Insertions insertions = new Insertions();
+    // The names of annotation files (.jaif files).
+    List<String> jaifFiles = new ArrayList<>();
     // The Java files into which to insert.
     List<String> javafiles = new ArrayList<>();
+
+    for (String arg : file_args) {
+      if (arg.endsWith(".java")) {
+        javafiles.add(arg);
+      } else if (arg.endsWith(".jaif") || arg.endsWith(".jann")) {
+        jaifFiles.add(arg);
+      } else {
+        System.out.println("Unrecognized file extension: " + arg);
+        System.exit(1);
+        throw new Error("unreachable");
+      }
+    }
+
+    computeConstructors(javafiles);
+
+    // The insertions specified by the annotation files.
+    Insertions insertions = new Insertions();
 
     // Indices to maintain insertion source traces.
     Map<String, Multimap<Insertion, Annotation>> insertionIndex = new HashMap<>();
@@ -565,93 +587,93 @@ public class Main {
     Map<String, Set<String>> annotationImports = new HashMap<>();
 
     IndexFileParser.setAbbreviate(abbreviate);
-    for (String arg : file_args) {
-      if (arg.endsWith(".java")) {
-        javafiles.add(arg);
-      } else if (arg.endsWith(".jaif") || arg.endsWith(".jann")) {
-        IndexFileSpecification spec = new IndexFileSpecification(arg);
-        try {
-          List<Insertion> parsedSpec = spec.parse();
-          if (temporaryDebug) {
-            System.out.printf("parsedSpec (size %d):%n", parsedSpec.size());
-            for (Insertion insertion : parsedSpec) {
-              System.out.printf("  %s, isInserted=%s%n", insertion, insertion.isInserted());
-            }
+    for (String jaifFile : jaifFiles) {
+      IndexFileSpecification spec = new IndexFileSpecification(jaifFile);
+      try {
+        List<Insertion> parsedSpec = spec.parse();
+        if (temporaryDebug) {
+          System.out.printf("parsedSpec (size %d):%n", parsedSpec.size());
+          for (Insertion insertion : parsedSpec) {
+            System.out.printf("  %s, isInserted=%s%n", insertion, insertion.isInserted());
           }
-          AScene scene = spec.getScene();
-          Collections.sort(
-              parsedSpec,
-              new Comparator<Insertion>() {
-                @Override
-                public int compare(Insertion i1, Insertion i2) {
-                  ASTPath p1 = i1.getCriteria().getASTPath();
-                  ASTPath p2 = i2.getCriteria().getASTPath();
-                  return p1 == null ? p2 == null ? 0 : -1 : p2 == null ? 1 : p1.compareTo(p2);
-                }
-              });
-          if (convert_jaifs) {
-            scenes.put(arg, filteredScene(scene));
-            for (Insertion ins : parsedSpec) {
-              insertionOrigins.put(ins, arg);
-            }
-            if (!insertionIndex.containsKey(arg)) {
-              insertionIndex.put(arg, LinkedHashMultimap.<Insertion, Annotation>create());
-            }
-            insertionIndex.get(arg).putAll(spec.insertionSources());
-          }
-          both.debug("Read %d annotations from %s%n", parsedSpec.size(), arg);
-          if (omit_annotation != null) {
-            List<Insertion> filtered = new ArrayList<Insertion>(parsedSpec.size());
-            for (Insertion insertion : parsedSpec) {
-              // TODO: this won't omit annotations if the insertion is more than
-              // just the annotation (such as if the insertion is a cast
-              // insertion or a 'this' parameter in a method declaration).
-              if (!omit_annotation.equals(insertion.getText())) {
-                filtered.add(insertion);
-              }
-            }
-            parsedSpec = filtered;
-            both.debug("After filtering: %d annotations from %s%n", parsedSpec.size(), arg);
-          }
-          insertions.addAll(parsedSpec);
-          annotationImports.putAll(spec.annotationImports());
-        } catch (RuntimeException e) {
-          if (e.getCause() != null && e.getCause() instanceof FileNotFoundException) {
-            System.err.println("File not found: " + arg);
-            System.exit(1);
-          } else {
-            throw e;
-          }
-        } catch (FileIOException e) {
-          // Add 1 to the line number since line numbers in text editors are usually one-based.
-          System.err.println(
-              "Error while parsing annotation file "
-                  + arg
-                  + " at line "
-                  + (e.lineNumber + 1)
-                  + ":");
-          if (e.getMessage() != null) {
-            System.err.println("  " + e.getMessage());
-          }
-          if (e.getCause() != null && e.getCause().getMessage() != null) {
-            String causeMessage = e.getCause().getMessage();
-            System.err.println("  " + causeMessage);
-            if (causeMessage.startsWith("Could not load class: ")) {
-              System.err.println(
-                  "To fix the problem, add class "
-                      + causeMessage.substring(22)
-                      + " to the classpath.");
-              System.err.println("The classpath is:");
-              System.err.println(ReflectionPlume.classpathToString());
-            }
-          }
-          if (print_error_stack) {
-            e.printStackTrace();
-          }
-          System.exit(1);
         }
-      } else {
-        throw new Error("Unrecognized file extension: " + arg);
+        AScene scene = spec.getScene();
+        Collections.sort(
+            parsedSpec,
+            new Comparator<Insertion>() {
+              @Override
+              public int compare(Insertion i1, Insertion i2) {
+                ASTPath p1 = i1.getCriteria().getASTPath();
+                ASTPath p2 = i2.getCriteria().getASTPath();
+                return p1 == null ? p2 == null ? 0 : -1 : p2 == null ? 1 : p1.compareTo(p2);
+              }
+            });
+        if (convert_jaifs) {
+          scenes.put(jaifFile, filteredScene(scene));
+          for (Insertion ins : parsedSpec) {
+            insertionOrigins.put(ins, jaifFile);
+          }
+          if (!insertionIndex.containsKey(jaifFile)) {
+            insertionIndex.put(jaifFile, LinkedHashMultimap.<Insertion, Annotation>create());
+          }
+          insertionIndex.get(jaifFile).putAll(spec.insertionSources());
+        }
+        verb.debug("Read %d annotations from %s%n", parsedSpec.size(), jaifFile);
+        if (omit_annotation != null) {
+          List<Insertion> filtered = new ArrayList<Insertion>(parsedSpec.size());
+          for (Insertion insertion : parsedSpec) {
+            // TODO: this won't omit annotations if the insertion is more than
+            // just the annotation (such as if the insertion is a cast
+            // insertion or a 'this' parameter in a method declaration).
+            if (!omit_annotation.equals(insertion.getText())) {
+              filtered.add(insertion);
+            }
+          }
+          parsedSpec = filtered;
+          verb.debug("After filtering: %d annotations from %s%n", parsedSpec.size(), jaifFile);
+        }
+        // if (dbug.isEnabled()) {
+        //   dbug.debug("parsedSpec:%n");
+        //   for (Insertion insertion : parsedSpec) {
+        //     dbug.debug("  %s, isInserted=%s%n", insertion, insertion.isInserted());
+        //   }
+        // }
+        insertions.addAll(parsedSpec);
+        annotationImports.putAll(spec.annotationImports());
+      } catch (RuntimeException e) {
+        if (e.getCause() != null && e.getCause() instanceof FileNotFoundException) {
+          System.err.println("File not found: " + jaifFile);
+          System.exit(1);
+        } else {
+          throw e;
+        }
+      } catch (FileIOException e) {
+        // Add 1 to the line number since line numbers in text editors are usually one-based.
+        System.err.println(
+            "Error while parsing annotation file "
+                + jaifFile
+                + " at line "
+                + (e.lineNumber + 1)
+                + ":");
+        if (e.getMessage() != null) {
+          System.err.println("  " + e.getMessage());
+        }
+        if (e.getCause() != null && e.getCause().getMessage() != null) {
+          String causeMessage = e.getCause().getMessage();
+          System.err.println("  " + causeMessage);
+          if (causeMessage.startsWith("Could not load class: ")) {
+            System.err.println(
+                "To fix the problem, add class "
+                    + causeMessage.substring(22)
+                    + " to the classpath.");
+            System.err.println("The classpath is:");
+            System.err.println(ReflectionPlume.classpathToString());
+          }
+        }
+        if (print_error_stack) {
+          e.printStackTrace();
+        }
+        System.exit(1);
       }
     }
 
@@ -683,21 +705,18 @@ public class Main {
         }
       }
 
-      String fileSep = System.getProperty("file.separator");
-      String fileLineSep = System.getProperty("line.separator");
-      Source src;
-      // Get the source file, and use it to obtain parse trees.
+      Source src = fileToSource(javafilename);
+      if (src == null) {
+        return;
+      } else {
+        verb.debug("Parsed %s%n", javafilename);
+      }
+      String fileLineSep;
       try {
         // fileLineSep is set here so that exceptions can be caught
         fileLineSep = FilesPlume.inferLineSeparator(javafilename);
-        src = new Source(javafilename);
-        verb.debug("Parsed %s%n", javafilename);
-      } catch (Source.CompilerException e) {
-        e.printStackTrace();
-        return;
       } catch (IOException e) {
-        e.printStackTrace();
-        return;
+        throw new Error("Cannot read " + javafilename, e);
       }
 
       // Imports required to resolve annotations (when abbreviate==true).
@@ -747,11 +766,8 @@ public class Main {
         }
 
         // Apply the positions to the source file.
-        if (both.isEnabled()) {
-          System.err.printf(
-              "getPositions returned %d positions in tree for %s%n",
-              positions.size(), javafilename);
-        }
+        verb.debug(
+            "getPositions returned %d positions in tree for %s%n", positions.size(), javafilename);
 
         Set<Pair<Integer, ASTPath>> positionKeysUnsorted = positions.keySet();
         Set<Pair<Integer, ASTPath>> positionKeysSorted =
@@ -775,8 +791,11 @@ public class Main {
           boolean constructorInserted = false;
           Set<String> seen = new TreeSet<>();
           List<Insertion> toInsertList = new ArrayList<>(positions.get(pair));
-          Collections.reverse(toInsertList);
+          // The Multimap interface doesn't seem to have a way to specify the order of elements in
+          // the collection, so sort them here.
+          toInsertList.sort(insertionSorter);
           dbug.debug("insertion pos: %d%n", pair.a);
+          dbug.debug("insertions sorted: %s%n", toInsertList);
           assert pair.a >= 0
               : "pos is negative: " + pair.a + " " + toInsertList.get(0) + " " + javafilename;
           for (Insertion iToInsert : toInsertList) {
@@ -919,7 +938,7 @@ public class Main {
                 System.out.println(); // terminate the line that contains dots
               }
             }
-            dbug.debug("Post-insertion source: %n" + src.getString());
+            dbug.debug("Post-insertion source: %s%n", src.getString());
 
             Collection<String> packageNames = nonJavaLangClasses(iToInsert.getPackageNames());
             if (!packageNames.isEmpty()) {
@@ -1013,6 +1032,7 @@ public class Main {
           if (pkg.isEmpty()) {
             outfile = new File(outdir, javafile.getName());
           } else {
+            @SuppressWarnings("StringSplitter") // false positive because pkg is non-empty
             String[] pkgPath = pkg.split("\\.");
             StringBuilder sb = new StringBuilder(outdir);
             for (int i = 0; i < pkgPath.length; i++) {
@@ -1032,6 +1052,79 @@ public class Main {
         System.err.println("Problem while writing file " + outfile);
         e.printStackTrace();
         System.exit(1);
+      }
+    }
+  }
+
+  /**
+   * Given a Java file name, creates a Source, or returns null.
+   *
+   * @param javaFileName a Java file name
+   * @return a Source for the Java file, or null
+   */
+  private static Source fileToSource(String javaFileName) {
+    Source src;
+    // Get the source file, and use it to obtain parse trees.
+    try {
+      src = new Source(javaFileName);
+      return src;
+    } catch (Source.CompilerException e) {
+      e.printStackTrace();
+      return null;
+    } catch (IOException e) {
+      e.printStackTrace();
+      return null;
+    }
+  }
+
+  /**
+   * Primary sort criterion: put declaration annotations (which go on a separate line) last, so that
+   * they *precede* type annotations when inserted.
+   *
+   * <p>Secondary sort criterion: for determinism, put annotations in reverse alphabetic order (so
+   * that they are alphabetized when inserted).
+   */
+  private static Comparator<Insertion> insertionSorter =
+      new Comparator<Insertion>() {
+        @Override
+        public int compare(Insertion i1, Insertion i2) {
+          boolean separateLine1 = i1.isSeparateLine();
+          boolean separateLine2 = i2.isSeparateLine();
+          if (separateLine1 && !separateLine2) {
+            return 1;
+          } else if (separateLine2 && !separateLine1) {
+            return -1;
+          } else {
+            return -i1.getText().compareTo(i2.getText());
+          }
+        }
+      };
+
+  /** Maps from binary class name to whether the class has any explicit constructor. */
+  public static Map<String, Boolean> hasExplicitConstructor = new HashMap<>();
+
+  /**
+   * Fills in the {@link hasExplicitConstructor} map.
+   *
+   * @param javaFiles the Java files that were passed on the command line
+   */
+  static void computeConstructors(List<String> javaFiles) {
+    for (String javaFile : javaFiles) {
+      Source src = fileToSource(javaFile);
+      if (src == null) {
+        continue;
+      }
+      for (CompilationUnitTree cut : src.parse()) {
+        TreePathScanner<Void, Void> constructorsScanner =
+            new TreePathScanner<Void, Void>() {
+              @Override
+              public Void visitClass(ClassTree ct, Void p) {
+                String className = TreePathUtil.getBinaryName(getCurrentPath());
+                hasExplicitConstructor.put(className, TreePathUtil.hasConstructor(ct));
+                return super.visitClass(ct, p);
+              }
+            };
+        constructorsScanner.scan(cut, null);
       }
     }
   }

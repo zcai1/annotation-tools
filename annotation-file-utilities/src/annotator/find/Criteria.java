@@ -5,6 +5,8 @@ import com.sun.source.tree.Tree;
 import com.sun.source.util.TreePath;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import org.checkerframework.checker.nullness.qual.Nullable;
+import org.checkerframework.checker.signature.qual.ClassGetName;
 import org.objectweb.asm.TypePath;
 import scenelib.annotations.el.BoundLocation;
 import scenelib.annotations.el.LocalLocation;
@@ -19,7 +21,8 @@ import scenelib.annotations.io.DebugWriter;
  * <p>This class also contains static factory methods for creating a {@code Criterion}.
  */
 public final class Criteria {
-  public static DebugWriter dbug = new DebugWriter();
+  /** Debugging logger. */
+  public static DebugWriter dbug = new DebugWriter(false);
 
   /** The set of criterion objects, indexed by kind. */
   private final Map<Criterion.Kind, Criterion> criteria;
@@ -84,6 +87,20 @@ public final class Criteria {
       }
     }
     return true;
+  }
+
+  /**
+   * Returns true if this Criteria only permits type annotations, not declaration annotations.
+   *
+   * @return true if this Criteria only permits type annotations, not declaration annotations
+   */
+  public boolean isOnlyTypeAnnotationCriterion() {
+    for (Criterion c : criteria.values()) {
+      if (c.isOnlyTypeAnnotationCriterion()) {
+        return true;
+      }
+    }
+    return false;
   }
 
   /**
@@ -229,14 +246,20 @@ public final class Criteria {
    *
    * @return class name from {@link InClassCriterion}, or null if none present
    */
-  public String getClassName() {
+  public @Nullable @ClassGetName String getClassName() {
+    String result = null;
     for (Criterion c : criteria.values()) {
       if (c.getKind() == Criterion.Kind.IN_CLASS) {
-        return ((InClassCriterion) c).className;
+        if (result == null) {
+          result = ((InClassCriterion) c).className;
+        } else {
+          throw new Error(
+              String.format("In two classes: %s %s", result, ((InClassCriterion) c).className));
+        }
       }
     }
 
-    return null;
+    return result;
   }
 
   /**
@@ -269,7 +292,11 @@ public final class Criteria {
     return null;
   }
 
-  /** @return a GenericArrayLocationCriterion if this has one, else null */
+  /**
+   * Returns a GenericArrayLocationCriterion if this has one, else null.
+   *
+   * @return a GenericArrayLocationCriterion if this has one, else null
+   */
   public GenericArrayLocationCriterion getGenericArrayLocation() {
     for (Criterion c : criteria.values()) {
       if (c.getKind() == Criterion.Kind.GENERIC_ARRAY_LOCATION) {
@@ -279,7 +306,11 @@ public final class Criteria {
     return null;
   }
 
-  /** @return a RelativeCriterion if this has one, else null */
+  /**
+   * Returns a RelativeCriterion if this has one, else null.
+   *
+   * @return a RelativeCriterion if this has one, else null
+   */
   public RelativeLocation getCastRelativeLocation() {
     RelativeLocation result = null;
     for (Criterion c : criteria.values()) {
@@ -292,7 +323,11 @@ public final class Criteria {
 
   // Returns the last one. Should really return the outermost one.
   // However, there should not be more than one unless all are equivalent.
-  /** @return an InClassCriterion if this has one, else null */
+  /**
+   * Returns an InClassCriterion if this has one, else null.
+   *
+   * @return an InClassCriterion if this has one, else null
+   */
   public InClassCriterion getInClass() {
     InClassCriterion result = null;
     for (Criterion c : criteria.values()) {
@@ -303,7 +338,11 @@ public final class Criteria {
     return result;
   }
 
-  /** @return true if this is on the zeroth bound of a type */
+  /**
+   * Returns true if this is on the zeroth bound of a type.
+   *
+   * @return true if this is on the zeroth bound of a type
+   */
   // Used when determining whether an annotation is on an implicit upper
   // bound (the "extends Object" that is customarily omitted).
   public boolean onBoundZero() {
@@ -380,11 +419,11 @@ public final class Criteria {
    * Creates an "in class" criterion: that a program element is enclosed by the specified class.
    *
    * @param name the name of the enclosing class
-   * @param exact whether to match only in the class itself, not in its inner classes
+   * @param exactMatch whether to match only in the class itself, not in its inner classes
    * @return an "in class" criterion
    */
-  public static final Criterion inClass(String name, boolean exact) {
-    return new InClassCriterion(name, /*exactmatch=*/ true);
+  public static final Criterion inClass(@ClassGetName String name, boolean exactMatch) {
+    return new InClassCriterion(name, /*exactMatch=*/ true);
   }
 
   /**
@@ -449,7 +488,14 @@ public final class Criteria {
     return new ReceiverCriterion(methodName);
   }
 
-  public static final Criterion returnType(String className, String methodName) {
+  /**
+   * Returns a ReturnTypeCriterion.
+   *
+   * @param className the class name
+   * @param methodName the method name
+   * @return a new ReturnTypeCriterion
+   */
+  public static final Criterion returnType(@ClassGetName String className, String methodName) {
     return new ReturnTypeCriterion(className, methodName);
   }
 

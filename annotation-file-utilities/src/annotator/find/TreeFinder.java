@@ -1,7 +1,7 @@
 package annotator.find;
 
 import annotator.Main;
-import annotator.scanner.CommonScanner;
+import annotator.scanner.TreePathUtil;
 import annotator.specification.IndexFileSpecification;
 import com.google.common.collect.LinkedHashMultimap;
 import com.google.common.collect.Multimaps;
@@ -57,6 +57,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import javax.lang.model.element.ElementKind;
@@ -77,12 +78,14 @@ import scenelib.type.Type;
 /**
  * A {@link TreeScanner} that is able to locate program elements in an AST based on {@code
  * Criteria}. {@link #getInsertionsByPosition(JCTree.JCCompilationUnit,List)} scans a tree and
- * returns a mapping of source positions (as character offsets) to insertion text.
+ * creates (in field {@code insertions}) a mapping of source positions (as character offsets) to
+ * insertion text.
  */
 public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
-  public static final DebugWriter dbug = new DebugWriter();
-  public static final DebugWriter stak = new DebugWriter();
-  public static final DebugWriter warn = new DebugWriter();
+  /** Debugging logger. */
+  public static final DebugWriter dbug = new DebugWriter(false);
+  /** Warning logger. */
+  public static final DebugWriter warn = new DebugWriter(false);
 
   /**
    * String representation of regular expression matching a comment in Java code. The part before
@@ -842,7 +845,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
    * Determine the insertion position for declaration annotations on various elements. For instance,
    * method declaration annotations should be placed before all the other modifiers and annotations.
    */
-  private class DeclarationPositionFinder extends TreeScanner<Integer, Void> {
+  private static class DeclarationPositionFinder extends TreeScanner<Integer, Void> {
 
     // When a method is visited, it is visited for the declaration itself.
     @Override
@@ -1017,8 +1020,8 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
       Insertion i = it.next();
       dbug.debug("Considering insertion at tree:%n");
       dbug.debug("  Insertion: %s%n", i);
-      dbug.debug("  First line of node: %s%n", Main.firstLine(node.toString()));
-      dbug.debug("  Type of node: %s%n", node.getClass());
+      dbug.debug("  At tree: %s%n", Main.firstLine(node.toString()));
+      dbug.debug("  Tree info: %s%n", node.getClass());
       if (i.isInserted()) {
         // Skip this insertion if it has already been inserted. See
         // the ReceiverInsertion class for details.
@@ -1031,8 +1034,8 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
         continue;
       } else {
         dbug.debug("  ... satisfied!%n");
-        dbug.debug("    First line of node: %s%n", Main.firstLine(node.toString()));
-        dbug.debug("    Type of node: %s%n", node.getClass());
+        dbug.debug("    At tree: %s%n", Main.firstLine(node.toString()));
+        dbug.debug("    Tree info: %s%n", node.getClass());
 
         ASTPath astPath = i.getCriteria().getASTPath();
         dbug.debug(
@@ -1067,6 +1070,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           }
         }
 
+        // These method calls may side-effect modify the insertion i.
         Integer pos =
             astPath == null
                 ? findPosition(path, i)
@@ -1150,7 +1154,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
         NewArrayTree newArray = (NewArrayTree) node;
 
         if (newArray.toString().startsWith("{")) {
-          addNewType(path, neu, newArray);
+          addNewType(neu, newArray);
         }
       }
 
@@ -1168,7 +1172,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
       ASTRecord insertRecord = astIndex.get(node);
       dbug.debug("TreeFinder.scan: node=%s%n  critera=%s%n", node, i.getCriteria());
 
-      if (CommonScanner.hasClassKind(node)
+      if (TreePathUtil.hasClassKind(node)
           && i.getCriteria().isOnTypeDeclarationExtendsClause()
           && ((ClassTree) node).getExtendsClause() == null) {
         return implicitClassBoundPosition((JCClassDecl) node, i);
@@ -1183,19 +1187,19 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           if (pos < 0) { // skip -- inserted w/generated constructor
             return null;
           }
-          dbug.debug("pos = %d at constructor name: %s%n", pos, jcnode.sym.toString());
+          dbug.debug("pos=%d at constructor name: %s%n", pos, jcnode.sym.toString());
         } else {
           Pair<ASTRecord, Integer> pair = tpf.scan(returnType, i);
           insertRecord = pair.a;
           pos = pair.b;
           assert handled(node);
-          dbug.debug("pos = %d at return type node: %s%n", pos, returnType.getClass());
+          dbug.debug("pos=%d at return type node: %s%n", pos, returnType.getClass());
         }
-      } else if (node.getKind() == Tree.Kind.TYPE_PARAMETER
+      } else if ((node.getKind() == Tree.Kind.TYPE_PARAMETER
               && i.getCriteria().onBoundZero()
               && (((TypeParameterTree) node).getBounds().isEmpty()
-                  || (((JCExpression) ((TypeParameterTree) node).getBounds().get(0)))
-                      .type.tsym.isInterface())
+                  || ((JCExpression) ((TypeParameterTree) node).getBounds().get(0))
+                      .type.tsym.isInterface()))
           || (node instanceof WildcardTree
               && ((WildcardTree) node).getBound() == null
               && wildcardLast(i.getCriteria().getGenericArrayLocation().getLocation()))) {
@@ -1235,7 +1239,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
         if (node.getKind() == Tree.Kind.METHOD) { // MethodTree
           // looking for the receiver or the declaration
           typeScan = i.getCriteria().isOnReceiver();
-        } else if (CommonScanner.hasClassKind(node)) { // ClassTree
+        } else if (TreePathUtil.hasClassKind(node)) { // ClassTree
           typeScan = !i.isSeparateLine(); // hacky check
         }
         if (typeScan) {
@@ -1246,7 +1250,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           pos = pair.b;
           assert handled(node);
           dbug.debug(
-              "pos = %d (insertRecord=%s) at type: %s (%s)%n",
+              "pos=%d (insertRecord=%s) at type: %s (%s)%n",
               pos, insertRecord, node.toString(), node.getClass());
         } else if (node.getKind() == Tree.Kind.METHOD
             && i.getKind() == Insertion.Kind.CONSTRUCTOR
@@ -1258,7 +1262,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           // looking for the declaration
           pos = dpf.scan(node, null);
           insertRecord = astRecord(node);
-          dbug.debug("pos = %s at declaration: %s%n", pos, node.getClass());
+          dbug.debug("pos=%s at declaration: %s%n", pos, node.getClass());
         }
       }
 
@@ -1334,7 +1338,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
         NewArrayTree newArray = (NewArrayTree) node;
 
         if (newArray.toString().startsWith("{")) {
-          addNewType(path, neu, newArray);
+          addNewType(neu, newArray);
         }
       }
 
@@ -1352,7 +1356,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
       ASTRecord insertRecord = astIndex.get(node);
       dbug.debug("TreeFinder.scan: node=%s%n  criteria=%s%n", node, i.getCriteria());
 
-      if (CommonScanner.hasClassKind(node)
+      if (TreePathUtil.hasClassKind(node)
           && entry.childSelectorIs(ASTPath.BOUND)
           && entry.getArgument() < 0
           && ((ClassTree) node).getExtendsClause() == null) {
@@ -1378,24 +1382,24 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           if (pos < 0) { // skip -- inserted w/generated constructor
             return null;
           }
-          dbug.debug("pos = %d at constructor name: %s%n", pos, jcnode.sym.toString());
+          dbug.debug("pos=%d at constructor name: %s%n", pos, jcnode.sym.toString());
         } else {
           Pair<ASTRecord, Integer> pair = tpf.scan(returnType, i);
           insertRecord = pair.a;
           pos = pair.b;
           assert handled(node);
-          dbug.debug("pos = %d at return type node: %s%n", pos, returnType.getClass());
+          dbug.debug("pos=%d at return type node: %s%n", pos, returnType.getClass());
         }
-      } else if (node.getKind() == Tree.Kind.TYPE_PARAMETER
+      } else if ((node.getKind() == Tree.Kind.TYPE_PARAMETER
               && entry.getTreeKind() == Tree.Kind.TYPE_PARAMETER // TypeParameter.bound
               && (((TypeParameterTree) node).getBounds().isEmpty()
-                  || (((JCExpression) ((TypeParameterTree) node).getBounds().get(0)))
-                      .type.tsym.isInterface())
-          || ASTPath.isWildcard(node.getKind())
+                  || ((JCExpression) ((TypeParameterTree) node).getBounds().get(0))
+                      .type.tsym.isInterface()))
+          || (ASTPath.isWildcard(node.getKind())
               && (entry.getTreeKind() == Tree.Kind.TYPE_PARAMETER
                   || ASTPath.isWildcard(entry.getTreeKind()))
               && entry.childSelectorIs(ASTPath.BOUND)
-              && (!entry.hasArgument() || entry.getArgument() == 0)) {
+              && (!entry.hasArgument() || entry.getArgument() == 0))) {
         Pair<ASTRecord, Integer> pair = tpf.scan(node, i);
         insertRecord = pair.a;
         pos = pair.b;
@@ -1466,7 +1470,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           insertRecord = pair.a;
           pos = pair.b;
           assert handled(node);
-          dbug.debug("pos = %d at type: %s (%s)%n", pos, node.toString(), node.getClass());
+          dbug.debug("pos=%d at type: %s (%s)%n", pos, node.toString(), node.getClass());
         } else if (node.getKind() == Tree.Kind.METHOD
             && i.getKind() == Insertion.Kind.CONSTRUCTOR
             && (((JCMethodDecl) node).mods.flags & Flags.GENERATEDCONSTR) != 0) {
@@ -1478,7 +1482,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           pos = dpf.scan(node, null);
           insertRecord = astRecord(node);
           assert pos != null;
-          dbug.debug("pos = %d at declaration: %s%n", pos, node.getClass());
+          dbug.debug("pos=%d at declaration: %s%n", pos, node.getClass());
         }
       }
 
@@ -1681,7 +1685,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
           "\tError: "
               + e.getMessage().replace(System.lineSeparator(), System.lineSeparator() + "\t\t"));
     }
-    if (dbug.or(stak).isEnabled()) {
+    if (dbug.isEnabled() || Main.print_error_stack) {
       e.printStackTrace();
     } else {
       System.err.println("\tRun with --print_error_stack to see the stack trace.");
@@ -1700,12 +1704,10 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
    * @param method the method the receiver is being inserted into
    */
   private void addReceiverType(TreePath path, ReceiverInsertion receiver, MethodTree method) {
-    // Find the name of the class
-    // with type parameters to create the receiver. Walk up the tree and
-    // pick up class names to add to the receiver type. Since we're
-    // starting from the innermost class, the classes we get to at earlier
-    // iterations of the loop are inside of the classes we get to at later
-    // iterations.
+    // Find the name of the class with type parameters to create the receiver. Walk up the tree and
+    // pick up class names to add to the receiver type. Since we're starting from the innermost
+    // class, the classes we get to at earlier iterations of the loop are inside of the classes we
+    // get to at later iterations.
     TreePath parent = path;
     Tree leaf = parent.getLeaf();
     Tree.Kind kind = leaf.getKind();
@@ -1718,7 +1720,9 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
     DeclaredType staticType = null;
     // For an inner class constructor, the receiver comes from the
     // superclass, so skip past the first type definition.
-    boolean isCon = ((MethodTree) parent.getLeaf()).getReturnType() == null;
+    // In JDK 11, the constructor's return type is null; in JDK 16, the return type is void.
+    boolean isCon = ((MethodTree) leaf).getName().contentEquals("<init>");
+
     boolean skip = isCon;
 
     while (kind != Tree.Kind.COMPILATION_UNIT && kind != Tree.Kind.NEW_CLASS) {
@@ -1792,7 +1796,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
     receiver.setAddComma(method.getParameters().size() > 0);
   }
 
-  private void addNewType(TreePath path, NewInsertion neu, NewArrayTree newArray) {
+  private void addNewType(NewInsertion neu, NewArrayTree newArray) {
     DeclaredType baseType = neu.getBaseType();
     if (baseType.getName().isEmpty()) {
       List<String> annotations = neu.getType().getAnnotations();
@@ -1808,7 +1812,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
 
   private void addConstructor(TreePath path, ConstructorInsertion cons, MethodTree method) {
     ReceiverInsertion recv = cons.getReceiverInsertion();
-    MethodTree leaf = (MethodTree) path.getLeaf();
+    assert method == (MethodTree) path.getLeaf();
     ClassTree parent = (ClassTree) path.getParentPath().getLeaf();
     DeclaredType baseType = cons.getBaseType();
     if (baseType.getName().isEmpty()) {
@@ -1823,7 +1827,7 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
     if (recv != null) {
       Iterator<Insertion> iter = cons.getInnerTypeInsertions().iterator();
       List<Insertion> recvInner = new ArrayList<>();
-      addReceiverType(path, recv, leaf);
+      addReceiverType(path, recv, method);
       while (iter.hasNext()) {
         Insertion i = iter.next();
         if (i.getCriteria().isOnReceiver()) {
@@ -1931,5 +1935,73 @@ public class TreeFinder extends TreeScanner<Void, List<Insertion>> {
       }
     }
     return getInsertionsByPosition(node, list);
+  }
+
+  ///
+  /// TreePath Formatting, for debugging
+  ///
+
+  /**
+   * Return a printed representation of a TreePath.
+   *
+   * @param path a TreePath
+   * @return a printed representation of the given TreePath
+   */
+  public static String toString(TreePath path) {
+    StringJoiner result = new StringJoiner(System.lineSeparator() + "    ");
+    result.add("TreePath:");
+    for (Tree t : path) {
+      result.add(toStringTruncated(t, 65) + " " + t.getKind());
+    }
+    return result.toString();
+  }
+
+  /**
+   * Returns a string representation of the leaf of the given path, using {@link
+   * #toStringTruncated}.
+   *
+   * @param path a path
+   * @param length the maximum length for the result; must be at least 6
+   * @return a one-line string representation of the leaf of the given path that is no longer than
+   *     {@code length} characters long
+   */
+  public static String leafToStringTruncated(TreePath path, int length) {
+    if (path == null) {
+      return "null";
+    }
+    return toStringTruncated(path.getLeaf(), length);
+  }
+
+  /**
+   * Return toString(), but without line separators.
+   *
+   * @param tree a tree
+   * @return a one-line string representation of the tree
+   */
+  public static String toStringOneLine(Tree tree) {
+    return tree.toString().trim().replaceAll("\\s+", " ");
+  }
+
+  /**
+   * Return either {@link #toStringOneLine} if it is no more than {@code length} characters, or
+   * {@link #toStringOneLine} quoted and truncated.
+   *
+   * @param tree a tree
+   * @param length the maximum length for the result; must be at least 6
+   * @return a one-line string representation of the tree that is no longer than {@code length}
+   *     characters long
+   */
+  public static String toStringTruncated(Tree tree, int length) {
+    if (length < 6) {
+      throw new IllegalArgumentException("bad length " + length);
+    }
+    String result = toStringOneLine(tree);
+    if (result.length() > length) {
+      // The quoting increases the likelihood that all delimiters are balanced in the result.
+      // That makes it easier to manipulate the result (such as skipping over it) in an
+      // editor.  The quoting also makes clear that the value is truncated.
+      result = "\"" + result.substring(0, length - 5) + "...\"";
+    }
+    return result;
   }
 }
