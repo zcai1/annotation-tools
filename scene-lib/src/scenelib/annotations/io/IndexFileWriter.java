@@ -507,7 +507,6 @@ public final class IndexFileWriter {
    * @param o the value or values to format
    * @return the String representation of the value
    */
-  @Deprecated // TEMPORORY
   public static String formatAnnotationValue(AnnotationFieldType aft, Object o) {
     StringBuilder sb = new StringBuilder();
     formatAnnotationValue(sb, aft, o);
