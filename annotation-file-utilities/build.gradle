@@ -15,7 +15,7 @@ apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
 
 group 'org.checkerframework'
-version '3.23.0'
+version '3.24.0'
 
 sourceCompatibility = 1.8
 
@@ -528,11 +528,11 @@ javadoc {
     options.addStringOption('Xmaxwarns', '10000')
     if (JavaVersion.current() != JavaVersion.VERSION_1_8) {
       options.JFlags = [
-	  "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-	  "--add-exports", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
-	  "--add-exports", "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
-	  "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
-	  "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
+          "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+          "--add-exports", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+          "--add-exports", "jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED",
+          "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+          "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED"
       ]
     }
 }
@@ -679,12 +679,14 @@ task copyToDeployDir {
 }
 
 task releaseBuild(type: GradleBuild) {
-    description 'Build everything required for a release.'
+    description 'Build everything required for a release, after cleanning.'
     doFirst {
         if (!project.hasProperty('deploy-dir')) {
-            throw new RuntimeException("You must specify a deploy-dir, the live site deploy-dir=/cse/www2/types/annotation-file-utilities/releases/_version num_")
+            println project.properties.entrySet()*.toString().sort().toString().replaceAll(", ","\n")
+            throw new RuntimeException("You must specify a deploy-dir. The live site deploy-dir=/cse/www2/types/annotation-file-utilities/releases/VERSIONNUMBER")
         }
         if (!project.hasProperty('afu.version')) {
+            println project.properties.entrySet()*.toString().sort().toString().replaceAll(", ","\n")
             throw new RuntimeException("You must specify an afu.version, such as 3.6.22")
         }
     }
@@ -693,6 +695,25 @@ task releaseBuild(type: GradleBuild) {
     startParameter.projectProperties += [release: true.toString()]
 
     tasks = ['clean', 'zipfile', 'testAnnotator', 'copyToDeployDir']
+}
+
+task releaseBuildWithoutTest(type: GradleBuild) {
+    description 'Build everything required for a release, without cleaning first.'
+    doFirst {
+        if (!project.hasProperty('deploy-dir')) {
+            println project.properties.entrySet()*.toString().sort().toString().replaceAll(", ","\n")
+            throw new RuntimeException("You must specify a deploy-dir. The live site deploy-dir=/cse/www2/types/annotation-file-utilities/releases/VERSIONNUMBER")
+        }
+        if (!project.hasProperty('afu.version')) {
+            println project.properties.entrySet()*.toString().sort().toString().replaceAll(", ","\n")
+            throw new RuntimeException("You must specify an afu.version, such as 3.6.22")
+        }
+    }
+
+    startParameter.projectProperties += gradle.startParameter.projectProperties
+    startParameter.projectProperties += [release: true.toString()]
+
+    tasks = ['clean', 'zipfile', 'copyToDeployDir']
 }
 
 
@@ -800,6 +821,10 @@ task reformat(type: Exec, dependsOn: [getCodeFormatScripts, pythonIsInstalled], 
     description 'Format the Java source code'
     executable 'python3'
     doFirst {
+        if (isJava8) {
+            println 'The checkFormat task cannot be run on Java 8.  Please use Java 11+.'
+            return
+        }
         args += "${formatScriptsHome}/run-google-java-format.py"
         args += getJavaFilesToFormat(project.name)
     }
