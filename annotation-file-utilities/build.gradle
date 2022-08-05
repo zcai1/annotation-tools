@@ -679,7 +679,7 @@ task copyToDeployDir {
 }
 
 task releaseBuild(type: GradleBuild) {
-    description 'Build everything required for a release, after cleanning.'
+    description 'Build everything required for a release, with tests.'
     doFirst {
         if (!project.hasProperty('deploy-dir')) {
             println project.properties.entrySet()*.toString().sort().toString().replaceAll(", ","\n")
@@ -698,7 +698,7 @@ task releaseBuild(type: GradleBuild) {
 }
 
 task releaseBuildWithoutTest(type: GradleBuild) {
-    description 'Build everything required for a release, without cleaning first.'
+    description 'Build everything required for a release, without tests.'
     doFirst {
         if (!project.hasProperty('deploy-dir')) {
             println project.properties.entrySet()*.toString().sort().toString().replaceAll(", ","\n")
