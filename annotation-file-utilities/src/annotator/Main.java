@@ -954,7 +954,7 @@ public class Main {
         }
       }
       if (verbose && !debug && (num_insertions % 50) != 0) {
-        // after all insertions, we should terminate the line that contains dots
+        // after all insertions, if necessary, terminate the line that contains dots
         System.out.println();
       }
 
