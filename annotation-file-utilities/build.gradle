@@ -10,12 +10,16 @@ plugins {
 
     // To show task list as a tree, run: ./gradlew <taskname> taskTree
     id 'com.dorongold.task-tree' version '2.1.0'
+
+    // Code formatting; defines targets "spotlessApply" and "spotlessCheck"
+    id 'com.diffplug.spotless' version '6.11.0'
 }
 apply plugin: 'java'
 apply plugin: 'com.github.johnrengelman.shadow'
+apply plugin: 'com.diffplug.spotless'
 
 group 'io.github.eisop'
-version '3.25.0-eisop1'
+version '3.26.0'
 
 sourceCompatibility = 1.8
 
@@ -33,24 +37,6 @@ ext {
     localRepo = ".git"
 }
 
-
-sourceSets {
-    main.java {
-        srcDirs = ['src', '../scene-lib/src']
-    }
-    test.java {
-        srcDirs += ['../scene-lib/test']
-        include("**/AnnotationsTest.java")
-        include("**/foo/*.java")
-        include("**/AnnotationVerifier.java")
-        include("**/TestSceneLib.java")
-        include("**/Example.java")
-    }
-    test.resources {
-        srcDirs += ['../scene-lib/test']
-        exclude("**/*.java")
-    }
-}
 configurations {
     javacJar
 }
@@ -72,7 +58,7 @@ dependencies {
     implementation 'org.plumelib:plume-util:1.5.9'
     implementation 'org.plumelib:reflection-util:1.0.5'
     // Annotations in checker-qual.jar are used, but no checkers are (currently) run on the code.
-    compileOnly 'io.github.eisop:checker-qual:3.24.0-eisop1'
+    compileOnly 'io.github.eisop:checker-qual:3.25.0-eisop1'
     ext.errorproneVersion = '2.15.0'
     // TODO: it's a bug that annotatedlib:guava requires the error_prone_annotations dependency.
     implementation "com.google.errorprone:error_prone_annotations:${errorproneVersion}"
@@ -80,10 +66,10 @@ dependencies {
         // So long as Guava only uses annotations from checker-qual, excluding it should not cause problems.
         exclude group: 'org.checkerframework'
     }
-    implementation 'org.ow2.asm:asm:9.3'
+    implementation 'org.ow2.asm:asm:9.4'
 
     testImplementation group: 'junit', name: 'junit', version: '4.13.2'
-    testImplementation 'io.github.eisop:checker-qual:3.24.0-eisop1'
+    testImplementation 'io.github.eisop:checker-qual:3.25.0-eisop1'
 
     errorprone("com.google.errorprone:error_prone_core:${errorproneVersion}")
 }
@@ -126,8 +112,11 @@ shadowJar {
     archiveFileName = 'annotation-file-utilities-all.jar'
     // Don't include any class from the Checker Framework.
     // This should just be checker-qual.
-    exclude 'org/checkerframework/**'
-    doFirst {
+    exclude 'org/checkerframework/checker/**'
+    exclude 'org/checkerframework/framework/**'
+    exclude 'org/checkerframework/dataflow/**'
+
+  doFirst {
         // TODO: The release fails because of this, so skip it for now.
         if (project.hasProperty('release') && false) {
             println 'Relocating packages.'
@@ -177,8 +166,8 @@ task skinnyJar(type: ShadowJar, dependsOn: compileJava) {
     includeEmptyDirs = false
     destinationDirectory = projectDir
     archiveFileName = 'annotation-file-utilities.jar'
-    include 'scenelib/**/*.class'
-    include 'annotator/**/*.class'
+    include 'org/checkerframework/afu/scenelib/**/*.class'
+    include 'org/checkerframework/afu/annotator/**/*.class'
 }
 
 test {
@@ -210,38 +199,31 @@ test {
 task testExample(dependsOn: compileTestJava, group: 'Verification') {
     description 'Run the scene-lib example test.'
     doLast {
-        String testDir = "${projectDir}/../scene-lib/test/annotations/tests/executable/"
+        String resourceDir = "${projectDir}/src/test/resources/annotations/tests/executable/"
+        String outputDir = "${project.buildDir}/example-test/"
+        file(outputDir).mkdir()
         javaexec {
-            classpath = files(sourceSets.test.java.outputDir)
+            classpath = files(sourceSets.test.java.classesDirectory)
             classpath += sourceSets.test.compileClasspath
-            mainClass = 'annotations.tests.executable.Example'
-            standardOutput = new FileOutputStream("${testDir}/example-stdout.jaif")
+            mainClass = 'org.checkerframework.afu.scenelib.test.executable.Example'
+            standardOutput = new FileOutputStream("${outputDir}/example-stdout.jaif")
 
-            args = ["${testDir}/example-input.jaif",
+            args = ["${resourceDir}/example-input.jaif",
                     "foo.Bar",
-                    "${testDir}/example-output.jaif"]
+                    "${outputDir}/example-output.jaif"]
         }
 
-        byte[] goalJaif = Files.readAllBytes(new File(testDir, "example-output.jaif.goal").toPath());
-        byte[] outputJaif = Files.readAllBytes(new File(testDir, "example-output.jaif").toPath());
+        byte[] goalJaif = Files.readAllBytes(new File(resourceDir, "example-output.jaif.goal").toPath());
+        byte[] outputJaif = Files.readAllBytes(new File(outputDir, "example-output.jaif").toPath());
         if (!Arrays.equals(goalJaif, outputJaif)) {
-            throw new GradleException("In ${testDir}, file example-output.jaif does not match goal.")
+            throw new GradleException("In ${outputDir}, file example-output.jaif does not match goal.")
         }
 
-        byte[] goalStdOut = Files.readAllBytes(new File(testDir, "example-stdout.jaif.goal").toPath());
-        byte[] stdOut = Files.readAllBytes(new File(testDir, "example-stdout.jaif").toPath());
+        byte[] goalStdOut = Files.readAllBytes(new File(resourceDir, "example-stdout.jaif.goal").toPath());
+        byte[] stdOut = Files.readAllBytes(new File(outputDir, "example-stdout.jaif").toPath());
         if (!Arrays.equals(goalStdOut, stdOut)) {
-            throw new GradleException("In ${testDir}, file example-stdout.jaif does not match goal.")
+            throw new GradleException("In ${outputDir}, file example-stdout.jaif does not match goal.")
         }
-    }
-}
-
-task cleanTestExample {
-    description 'Clean the scene-lib example test.'
-    doLast {
-        String testDir = "${projectDir}/../scene-lib/test/annotations/tests/executable/"
-        delete "${testDir}/example-output.jaif"
-        delete "${testDir}/example-stdout.jaif"
     }
 }
 
@@ -261,7 +243,7 @@ task cleanTestAnnotator(type: Exec) {
 ext.plumeBibHome = "${projectDir}/plume-bib"
 
 task getPlumeBib() {
-    description 'Obtain or update the plume-bib repository.'
+    description 'Obtain or update the plume-bib bibliography.'
     if (file(plumeBibHome).exists()) {
         exec {
             workingDir plumeBibHome
@@ -552,13 +534,13 @@ configurations {
   requireJavadoc
 }
 dependencies {
-  requireJavadoc "org.plumelib:require-javadoc:1.0.4"
+  requireJavadoc "org.plumelib:require-javadoc:1.0.5"
 }
 task requireJavadoc(type: JavaExec) {
   description = 'Ensures that Javadoc documentation exists.'
   mainClass = "org.plumelib.javadoc.RequireJavadoc"
   classpath = configurations.requireJavadoc
-  args "annotation-file-utilities/src", "scene-lib/src"
+  args "annotation-file-utilities/src"
   workingDir = "${projectDir}/.."
 }
 // check.dependsOn requireJavadoc
@@ -570,7 +552,7 @@ task updateUserOptionsJavadoc(type: Javadoc, dependsOn: 'assemble') {
 
   // Include only sources from annotation-file-utilities, not from scene-lib.
   source = fileTree(dir: 'src', include: '**/*.java')
-  exclude 'scenelib.annotations.io.classfile/**'
+  exclude 'org.checkerframework.afu.scenelib.io.classfile/**'
   classpath = project.sourceSets.main.compileClasspath + project.sourceSets.main.runtimeClasspath
   options.memberLevel = JavadocMemberLevel.PRIVATE
   options.docletpath = project.sourceSets.main.runtimeClasspath as List
@@ -590,7 +572,7 @@ task updateUserOptionsHtml(type: Javadoc, dependsOn: 'assemble') {
 
   // Include only sources from annotation-file-utilities, not from scene-lib.
   source = fileTree(dir: 'src', include: '**/*.java')
-  exclude 'scenelib.annotations.io.classfile/**'
+  exclude 'org.checkerframework.afu.scenelib.io.classfile/**'
   classpath = project.sourceSets.main.compileClasspath + project.sourceSets.main.runtimeClasspath
   options.memberLevel = JavadocMemberLevel.PRIVATE
   options.docletpath = project.sourceSets.main.runtimeClasspath as List
@@ -737,97 +719,33 @@ task setLocalRepo(type:Exec) {
 
 task installGitHooks(type: Copy, dependsOn: 'setLocalRepo') {
     description 'Copies git hooks to .git directory'
-    from files(".git.pre-commit")
+    from files("../.git.pre-commit")
     rename('.git\\.(.*)', '$1')
-    into localRepo + "/hooks"
+    into "${localRepo}/hooks"
+  doFirst{
+    // setLocalRepo changed the value of `localRepo`, so reset into.
+    into "${localRepo}/hooks"
+  }
 }
 compileJava.dependsOn installGitHooks
 
 
 /// Code formatting
 
-ext.formatScriptsHome = "${projectDir}/.run-google-java-format"
+if (!isJava8) {
+spotless {
+  format 'misc', {
+    // define the files to apply `misc` to
+    target '*.gradle', '*.md', '.gitignore'
 
-task getCodeFormatScripts() {
-    description 'Obtain or update the run-google-java-format scripts'
-    if (file(formatScriptsHome).exists()) {
-        exec {
-            workingDir formatScriptsHome
-            executable 'git'
-            args = ['pull', '-q']
-            ignoreExitValue = true
-        }
-    } else {
-        exec {
-            workingDir "${formatScriptsHome}/../"
-            executable 'git'
-            args = ['clone', '-q', '--depth', '1', 'https://github.com/eisop-plume-lib/run-google-java-format.git', '.run-google-java-format']
-        }
-    }
+    // define the steps to apply to those files
+    trimTrailingWhitespace()
+    indentWithSpaces(2)
+    endWithNewline()
+  }
+  java {
+    googleJavaFormat()
+    formatAnnotations()
+  }
 }
-
-/**
- * Returns a list of all the Java files that should be formatted for the given project. These are:
- *
- * All java files in the main sourceSet.
- * All java files in the tests directory that compile.
- *
- * @param projectName name of the project to format
- * @return a list of all Java files that should be formatted for projectName
- */
-List<String> getJavaFilesToFormat(projectName) {
-    List<File> javaFiles = new ArrayList<>();
-    sourceSets.forEach { set ->
-        javaFiles.addAll(set.java.files)
-    }
-
-    // Collect all java files in tests directory
-    fileTree("tests").visit { details ->
-        // If you change this, also change checker/bin-devel/git.pre-commit
-        if (!details.path.contains("nullness-javac-errors")
-                && !details.path.contains("returnsreceiverdelomboked")
-                && !details.path.contains("build")
-                && details.name.endsWith('java')) {
-            javaFiles.add(details.file)
-        }
-    }
-
-    List<String> args = new ArrayList<>();
-    for (File f : javaFiles) {
-        args += relativePath(f)
-    }
-    return args
-}
-
-task checkFormat(type: Exec, dependsOn: [getCodeFormatScripts, pythonIsInstalled], group: 'Format') {
-    description 'Check whether the source code is properly formatted'
-    executable 'python3'
-
-    doFirst {
-        if (isJava8) {
-            println 'The checkFormat task cannot be run on Java 8.  Please use Java 11+.'
-            return
-        }
-        args += "${formatScriptsHome}/check-google-java-format.py"
-        args += getJavaFilesToFormat(project.name)
-    }
-    ignoreExitValue = true
-    doLast {
-        if (!executionResult.isPresent() || executionResult.get().getExitValue() != 0) {
-            throw new RuntimeException('Found improper formatting, try running:  ./gradlew reformat"')
-        }
-    }
-}
-
-task reformat(type: Exec, dependsOn: [getCodeFormatScripts, pythonIsInstalled], group: 'Format') {
-    description 'Format the Java source code'
-    executable 'python3'
-    doFirst {
-        if (isJava8) {
-            println 'The checkFormat task cannot be run on Java 8.  Please use Java 11+.'
-            return
-        }
-        args += "${formatScriptsHome}/run-google-java-format.py"
-        args += getJavaFilesToFormat(project.name)
-    }
 }
